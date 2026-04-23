@@ -27,7 +27,8 @@
 
 - 中立プロンプトマスタは `adapters/commands/` を正本とする。Claude 向けは無加工コピー、Copilot 向けは frontmatter 付与と検証を伴う変換で生成する。
 - Copilot 向け変換で未登録ツール名を検出した場合、配布を中断する。ツール名の追加は `tool-map.ts` への登録を伴う設計変更として扱う。
-- 配布資産の参照経路は対象リポジトリの `.claude/` および `.github/prompts/` に完結させ、aidd リポジトリへの絶対パス依存を残さない。
+- プロジェクト指示書（CLAUDE.md）と行動原則（`.claude/rules/`）・ワークフロー定義（`.claude/workflow/`）は、Copilot 側に `.github/copilot-instructions.md` / `.github/instructions/<name>.instructions.md` / `.github/workflow/<name>.md` として機械的に派生配布する。本文中の `.claude/...` パス参照は Copilot 側配布時に `.github/...` へ書き換え、規約の混在を避ける。
+- 配布資産の参照経路は対象リポジトリの `.claude/` および `.github/` に完結させ、aidd リポジトリへの絶対パス依存を残さない。
 
 ### エスカレーション条件
 

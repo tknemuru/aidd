@@ -3,13 +3,18 @@
  * csync コマンドエントリーポイント。
  *
  * aidd リポジトリの配布資産を対象リポジトリの `.claude/` および
- * `.github/prompts/` に同期する。
+ * `.github/` に同期する。Claude Code と GitHub Copilot の双方で
+ * 同一のプロジェクト指示・行動原則・スラッシュコマンドが適用されるよう、
+ * ツール別のファイル規約に合わせて機械的に派生させる。
  *
  * 処理概要:
  *  1. Claude 向け資産（adapters/claude/）を対象の .claude/ へコピー
  *  2. 中立プロンプト（adapters/commands/）を Claude 形式で .claude/commands/ に配置
  *  3. 中立プロンプトを Copilot 形式に変換して .github/prompts/ に配置
  *  4. CLAUDE.md を対象リポジトリのルート直下へコピー
+ *  5. CLAUDE.md をパス書換して .github/copilot-instructions.md に配置
+ *  6. .claude/rules/*.md を .github/instructions/*.instructions.md に配置
+ *  7. .claude/workflow/*.md を .github/workflow/*.md に配置
  *
  * Windows ネイティブでも動作するよう外部コマンド（rsync 等）には依存しない。
  */
@@ -18,6 +23,10 @@ import path from "node:path";
 import { aiddPath } from "./paths.js";
 import { copyDir, dirExists } from "./csync/fs-util.js";
 import { toCopilotPrompt } from "./csync/convert.js";
+import {
+  rewriteClaudePaths,
+  withInstructionsFrontmatter,
+} from "./csync/path-rewrite.js";
 import { repoRoot } from "./git/utils.js";
 
 /**
@@ -36,6 +45,8 @@ async function main(): Promise<void> {
   const dstClaudeDir = path.join(targetRoot, ".claude");
   const dstCommandsDir = path.join(dstClaudeDir, "commands");
   const dstCopilotDir = path.join(targetRoot, ".github", "prompts");
+  const dstInstructionsDir = path.join(targetRoot, ".github", "instructions");
+  const dstWorkflowDir = path.join(targetRoot, ".github", "workflow");
 
   if (!(await dirExists(claudeSrc))) {
     console.error(`エラー: 同期元が存在しません: ${claudeSrc}`);
@@ -84,11 +95,60 @@ async function main(): Promise<void> {
   const claudeMdDst = path.join(targetRoot, "CLAUDE.md");
   await fs.copyFile(claudeMdSrc, claudeMdDst);
 
+  // 5. Copilot 向けプロジェクト指示書を配置
+  const claudeMdBody = await fs.readFile(claudeMdSrc, "utf8");
+  const copilotInstructionsDst = path.join(
+    targetRoot,
+    ".github",
+    "copilot-instructions.md",
+  );
+  await fs.mkdir(path.dirname(copilotInstructionsDst), { recursive: true });
+  await fs.writeFile(
+    copilotInstructionsDst,
+    rewriteClaudePaths(claudeMdBody),
+    "utf8",
+  );
+
+  // 6. 行動原則を Copilot 向け instructions として配置
+  const rulesSrc = path.join(claudeSrc, "rules");
+  if (await dirExists(rulesSrc)) {
+    await fs.mkdir(dstInstructionsDir, { recursive: true });
+    const ruleEntries = await fs.readdir(rulesSrc, { withFileTypes: true });
+    for (const entry of ruleEntries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const src = path.join(rulesSrc, entry.name);
+      const body = await fs.readFile(src, "utf8");
+      const base = entry.name.replace(/\.md$/, "");
+      const dst = path.join(dstInstructionsDir, `${base}.instructions.md`);
+      const converted = withInstructionsFrontmatter(rewriteClaudePaths(body));
+      await fs.writeFile(dst, converted, "utf8");
+    }
+  }
+
+  // 7. ワークフロー定義を Copilot 側 .github/workflow/ へも配置
+  const workflowSrc = path.join(claudeSrc, "workflow");
+  if (await dirExists(workflowSrc)) {
+    await fs.mkdir(dstWorkflowDir, { recursive: true });
+    const workflowEntries = await fs.readdir(workflowSrc, {
+      withFileTypes: true,
+    });
+    for (const entry of workflowEntries) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const src = path.join(workflowSrc, entry.name);
+      const body = await fs.readFile(src, "utf8");
+      const dst = path.join(dstWorkflowDir, entry.name);
+      await fs.writeFile(dst, rewriteClaudePaths(body), "utf8");
+    }
+  }
+
   console.log("");
   console.log(`完了: 配布資産を ${targetRoot} に同期しました。`);
   console.log(`  - Claude 資産: ${dstClaudeDir}`);
   console.log(`  - Copilot プロンプト: ${dstCopilotDir}`);
-  console.log(`  - プロジェクト指示書: ${claudeMdDst}`);
+  console.log(`  - プロジェクト指示書 (Claude): ${claudeMdDst}`);
+  console.log(`  - プロジェクト指示書 (Copilot): ${copilotInstructionsDst}`);
+  console.log(`  - Copilot instructions: ${dstInstructionsDir}`);
+  console.log(`  - Copilot workflow: ${dstWorkflowDir}`);
 }
 
 main().catch((err: unknown) => {

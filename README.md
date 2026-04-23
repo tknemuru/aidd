@@ -91,6 +91,9 @@ csync
 - `adapters/claude/` 配下（CLAUDE.md 以外） → `<target-repo>/.claude/`
 - `adapters/commands/*.md` → `<target-repo>/.claude/commands/`（Claude 形式）
 - `adapters/commands/*.md` → `<target-repo>/.github/prompts/*.prompt.md`（Copilot 形式）
+- `adapters/claude/CLAUDE.md` → `<target-repo>/.github/copilot-instructions.md`（Copilot 向けにパス参照を書換）
+- `adapters/claude/rules/*.md` → `<target-repo>/.github/instructions/*.instructions.md`（frontmatter 付与 + パス書換）
+- `adapters/claude/workflow/*.md` → `<target-repo>/.github/workflow/*.md`（パス書換）
 
 同期後、対象リポジトリは aidd リポジトリへの実行時パス依存を持たない。
 
