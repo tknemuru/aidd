@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>Claude Code インサイト</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #334155; line-height: 1.65; padding: 48px 24px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    h2 { font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 48px; margin-bottom: 16px; }
+    .subtitle { color: #64748b; font-size: 15px; margin-bottom: 32px; }
+    .nav-toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 32px 0; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .nav-toc a { font-size: 12px; color: #64748b; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f1f5f9; transition: all 0.15s; }
+    .nav-toc a:hover { background: #e2e8f0; color: #334155; }
+    .stats-row { display: flex; gap: 24px; margin-bottom: 40px; padding: 20px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .at-a-glance { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+    .glance-title { font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 16px; }
+    .glance-sections { display: flex; flex-direction: column; gap: 12px; }
+    .glance-section { font-size: 14px; color: #78350f; line-height: 1.6; }
+    .glance-section strong { color: #92400e; }
+    .see-more { color: #b45309; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    .see-more:hover { text-decoration: underline; }
+    .project-areas { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .project-area { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .area-name { font-weight: 600; font-size: 15px; color: #0f172a; }
+    .area-count { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; }
+    .area-desc { font-size: 14px; color: #475569; line-height: 1.5; }
+    .narrative { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .narrative p { margin-bottom: 12px; font-size: 14px; color: #475569; line-height: 1.7; }
+    .key-insight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 14px; color: #166534; }
+    .section-intro { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+    .big-wins { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .big-win { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; }
+    .big-win-title { font-weight: 600; font-size: 15px; color: #166534; margin-bottom: 8px; }
+    .big-win-desc { font-size: 14px; color: #15803d; line-height: 1.5; }
+    .friction-categories { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .friction-category { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 16px; }
+    .friction-title { font-weight: 600; font-size: 15px; color: #991b1b; margin-bottom: 6px; }
+    .friction-desc { font-size: 13px; color: #7f1d1d; margin-bottom: 10px; }
+    .friction-examples { margin: 0 0 0 20px; font-size: 13px; color: #334155; }
+    .friction-examples li { margin-bottom: 4px; }
+    .claude-md-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .claude-md-section h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0 0 12px 0; }
+    .claude-md-actions { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dbeafe; }
+    .copy-all-btn { background: #2563eb; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .copy-all-btn:hover { background: #1d4ed8; }
+    .copy-all-btn.copied { background: #16a34a; }
+    .claude-md-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
+    .claude-md-item:last-child { border-bottom: none; }
+    .cmd-checkbox { margin-top: 2px; }
+    .cmd-code { background: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #1e40af; border: 1px solid #bfdbfe; font-family: monospace; display: block; white-space: pre-wrap; word-break: break-word; flex: 1; }
+    .cmd-why { font-size: 12px; color: #64748b; width: 100%; padding-left: 24px; margin-top: 4px; }
+    .features-section, .patterns-section { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .feature-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; }
+    .pattern-card { background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 16px; }
+    .feature-title, .pattern-title { font-weight: 600; font-size: 15px; color: #0f172a; margin-bottom: 6px; }
+    .feature-oneliner { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .pattern-summary { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .feature-why, .pattern-detail { font-size: 13px; color: #334155; line-height: 1.5; }
+    .feature-examples { margin-top: 12px; }
+    .feature-example { padding: 8px 0; border-top: 1px solid #d1fae5; }
+    .feature-example:first-child { border-top: none; }
+    .example-desc { font-size: 13px; color: #334155; margin-bottom: 6px; }
+    .example-code-row { display: flex; align-items: flex-start; gap: 8px; }
+    .example-code { flex: 1; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; overflow-x: auto; white-space: pre-wrap; }
+    .copyable-prompt-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+    .copyable-prompt-row { display: flex; align-items: flex-start; gap: 8px; }
+    .copyable-prompt { flex: 1; background: #f8fafc; padding: 10px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; border: 1px solid #e2e8f0; white-space: pre-wrap; line-height: 1.5; }
+    .feature-code { background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0; display: flex; align-items: flex-start; gap: 8px; }
+    .feature-code code { flex: 1; font-family: monospace; font-size: 12px; color: #334155; white-space: pre-wrap; }
+    .pattern-prompt { background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0; }
+    .pattern-prompt code { font-family: monospace; font-size: 12px; color: #334155; display: block; white-space: pre-wrap; margin-bottom: 8px; }
+    .prompt-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+    .copy-btn { background: #e2e8f0; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #475569; flex-shrink: 0; }
+    .copy-btn:hover { background: #cbd5e1; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+    .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .chart-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 12px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 6px; }
+    .bar-label { width: 100px; font-size: 11px; color: #475569; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; margin: 0 8px; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-value { width: 28px; font-size: 11px; font-weight: 500; color: #64748b; text-align: right; }
+    .empty { color: #94a3b8; font-size: 13px; }
+    .horizon-section { display: flex; flex-direction: column; gap: 16px; }
+    .horizon-card { background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border: 1px solid #c4b5fd; border-radius: 8px; padding: 16px; }
+    .horizon-title { font-weight: 600; font-size: 15px; color: #5b21b6; margin-bottom: 8px; }
+    .horizon-possible { font-size: 14px; color: #334155; margin-bottom: 10px; line-height: 1.5; }
+    .horizon-tip { font-size: 13px; color: #6b21a8; background: rgba(255,255,255,0.6); padding: 8px 12px; border-radius: 4px; }
+    .feedback-header { margin-top: 48px; color: #64748b; font-size: 16px; }
+    .feedback-intro { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+    .feedback-section { margin-top: 16px; }
+    .feedback-section h3 { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 12px; }
+    .feedback-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .feedback-card.team-card { background: #eff6ff; border-color: #bfdbfe; }
+    .feedback-card.model-card { background: #faf5ff; border-color: #e9d5ff; }
+    .feedback-title { font-weight: 600; font-size: 14px; color: #0f172a; margin-bottom: 6px; }
+    .feedback-detail { font-size: 13px; color: #475569; line-height: 1.5; }
+    .feedback-evidence { font-size: 12px; color: #64748b; margin-top: 8px; }
+    .fun-ending { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fbbf24; border-radius: 12px; padding: 24px; margin-top: 40px; text-align: center; }
+    .fun-headline { font-size: 18px; font-weight: 600; color: #78350f; margin-bottom: 8px; }
+    .fun-detail { font-size: 14px; color: #92400e; }
+    .collapsible-section { margin-top: 16px; }
+    .collapsible-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    .collapsible-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #475569; }
+    .collapsible-arrow { font-size: 12px; color: #94a3b8; transition: transform 0.2s; }
+    .collapsible-content { display: none; padding-top: 16px; }
+    .collapsible-content.open { display: block; }
+    .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+    @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } .stats-row { justify-content: center; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Claude Code インサイト</h1>
+    <p class="subtitle">911セッションで5,220メッセージ | 2026-02-03 〜 2026-02-05</p>
+
+
+    <div class="at-a-glance">
+      <div class="glance-title">概要</div>
+      <div class="glance-sections">
+        <div class="glance-section"><strong>うまくいっていること：</strong>複雑なRFCワークフローを単一のトリガーに変換するカスタムコマンドシステム（/urfc、/rrfc）を構築しており、これはClaude Codeの高度な活用法です。並列タスクオーケストレーションを活用して複数のRFCレビューを同時に実行し、PRレビュアーのコメントが自動的にドキュメント更新にフィードバックされる緊密なループも構築されています。 <a href="#section-wins" class="see-more">注目すべき成果 →</a></div>
+        <div class="glance-section"><strong>課題となっていること：</strong>Claude側では、セッションが編集を実行する前に息切れすることが頻繁にあります — Claudeが「情報収集と読み取り」フェーズに時間をかけすぎ、変更を適用する余裕がなくなっています。ユーザー側では、カスタムコマンドが1回のパスで多くのことをやろうとしすぎている可能性があり（コンテキスト収集＋分析＋編集）、またブランチ命名規則などの明示的なガイダンスがないため、誤った前提に基づく無駄なサイクルが発生しています。 <a href="#section-friction" class="see-more">問題が発生する箇所 →</a></div>
+        <div class="glance-section"><strong>すぐに試せる改善：</strong>Hooksを使用してRFCコマンド実行前にプリフライトチェック（正しいブランチの存在確認など）を追加してみてください。これにより、Claudeがgitの状態を誤って推測するエラーを排除できます。また、/urfcコマンドを2つのフェーズに分割することも検討してください：調査結果をファイルに保存するコンテキスト収集ステップと、その続きから作業する編集ステップに分けることで、セッションが作業途中で終了することを防げます。 <a href="#section-features" class="see-more">試すべき機能 →</a></div>
+        <div class="glance-section"><strong>今後の展望：</strong>モデルがより高性能になるにつれ、/rrfcと/urfcを統合して、レビューコメントの読み取り、更新の起草、フィードバックに対する検証、自動コミットまでを行うエンドツーエンドのパイプラインを目指しましょう。さらに興味深いのは、並列レビュアーパターンを専門レビュアーエージェント（アーキテクチャ、セキュリティ、API設計）に進化させ、シンセサイザーエージェントが各エージェントの発見事項を統合して優先順位付きのアクションプランにまとめることです。 <a href="#section-horizon" class="see-more">今後の展望 →</a></div>
+      </div>
+    </div>
+
+
+    <nav class="nav-toc">
+      <a href="#section-work">作業内容</a>
+      <a href="#section-usage">使い方の傾向</a>
+      <a href="#section-wins">注目すべき成果</a>
+      <a href="#section-friction">問題が発生する箇所</a>
+      <a href="#section-features">試すべき機能</a>
+      <a href="#section-patterns">新しい活用パターン</a>
+      <a href="#section-horizon">今後の展望</a>
+      <a href="#section-feedback">チームフィードバック</a>
+    </nav>
+
+    <div class="stats-row">
+      <div class="stat"><div class="stat-value">5,220</div><div class="stat-label">メッセージ</div></div>
+      <div class="stat"><div class="stat-value">+345,089/-34,292</div><div class="stat-label">行数</div></div>
+      <div class="stat"><div class="stat-value">2304</div><div class="stat-label">ファイル</div></div>
+      <div class="stat"><div class="stat-value">3</div><div class="stat-label">日間</div></div>
+      <div class="stat"><div class="stat-value">1740</div><div class="stat-label">メッセージ/日</div></div>
+    </div>
+
+
+    <h2 id="section-work">作業内容</h2>
+    <div class="project-areas">
+
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">レビューフィードバックに基づくRFCドキュメント更新</span>
+            <span class="area-count">約2セッション</span>
+          </div>
+          <div class="area-desc">カスタム /urfc コマンドを使用して、レビューコメントやフィードバックに基づきRFCドキュメントを更新しました。Claudeは関連するすべてのファイルを読み取り、コードベースを調査して修正を準備しましたが、セッションが編集の完了前に終了することが多く、部分的な達成にとどまることがありました。</div>
+        </div>
+
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">RFCレビューのオーケストレーション</span>
+            <span class="area-count">約1セッション</span>
+          </div>
+          <div class="area-desc">カスタム /rrfc コマンドを使用して並列RFCレビュープロセスを起動しました。Claudeはブランチのチェックアウト、ファイルの検証、並列レビュータスクの起動を含む多段階ワークフローを実行し、複数の視点からRFCドキュメントを分析しました。</div>
+        </div>
+
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">PRコメント対応とレビュアーフィードバック</span>
+            <span class="area-count">約1セッション</span>
+          </div>
+          <div class="area-desc">PRコメント対応コマンドを実行して、RFCに対するレビュアーのフィードバックに対応しました。ClaudeはPRコメントを収集し、レビュアーの懸念を分析し、MarkdownとJavaScriptファイルにまたがるマルチファイル変更機能を活用してRFCドキュメントの更新を開始しました。</div>
+        </div>
+
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">RFC作成と既存RFCの発見</span>
+            <span class="area-count">約1セッション</span>
+          </div>
+          <div class="area-desc">新しいRFCドキュメントの作成を試みましたが、Claudeが既にRFCが存在することを正しく検出し、代わりにレビュープロセスを起動するよう方向転換しました。これはClaudeが重複作業を回避し、適切な次のステップにリダイレクトする先回り対応の好例です。</div>
+        </div>
+
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">JavaScriptとMarkdownのコードベース分析</span>
+            <span class="area-count">約911セッション</span>
+          </div>
+          <div class="area-desc">全セッションを通じて、BashツールとReadツールの多用は主にJavaScriptとMarkdownファイルの広範なコードベース探索を示しています。TaskCreateとTaskUpdateの呼び出し数の多さ（合計約4,700回）は、構造化されたRFCおよびドキュメントワークフローの一部として、並列サブタスクのオーケストレーションにClaudeが大いに活用されたことを示しています。</div>
+        </div>
+
+    </div>
+
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">目的別の利用</div>
+        <div class="bar-row">
+        <div class="bar-label">ドキュメント更新</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#2563eb"></div></div>
+        <div class="bar-value">25</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">PRコメント対応</div>
+        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#2563eb"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">ドキュメントレビュー</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">ドキュメント作成</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">コードレビュー</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">よく使うツール</div>
+        <div class="bar-row">
+        <div class="bar-label">Bash</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#0891b2"></div></div>
+        <div class="bar-value">7227</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Read</div>
+        <div class="bar-track"><div class="bar-fill" style="width:96.43005396430054%;background:#0891b2"></div></div>
+        <div class="bar-value">6969</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Edit</div>
+        <div class="bar-track"><div class="bar-fill" style="width:42.31354642313546%;background:#0891b2"></div></div>
+        <div class="bar-value">3058</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">TaskUpdate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:33.74844333748443%;background:#0891b2"></div></div>
+        <div class="bar-value">2439</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">TaskCreate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:31.935796319357962%;background:#0891b2"></div></div>
+        <div class="bar-value">2308</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Glob</div>
+        <div class="bar-track"><div class="bar-fill" style="width:24.7682302476823%;background:#0891b2"></div></div>
+        <div class="bar-value">1790</div>
+      </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">言語</div>
+        <div class="bar-row">
+        <div class="bar-label">Markdown</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#10b981"></div></div>
+        <div class="bar-value">5623</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">JavaScript</div>
+        <div class="bar-track"><div class="bar-fill" style="width:80.97101191534767%;background:#10b981"></div></div>
+        <div class="bar-value">4553</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">YAML</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.610172505779833%;background:#10b981"></div></div>
+        <div class="bar-value">203</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">JSON</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.4856837986839766%;background:#10b981"></div></div>
+        <div class="bar-value">196</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Shell</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.39125022230126266%;background:#10b981"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Python</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.07113640405477503%;background:#10b981"></div></div>
+        <div class="bar-value">4</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">セッションタイプ</div>
+        <div class="bar-row">
+        <div class="bar-label">単一タスク</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">52</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">複数タスク</div>
+        <div class="bar-track"><div class="bar-fill" style="width:9.615384615384617%;background:#8b5cf6"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+      </div>
+    </div>
+
+
+    <h2 id="section-usage">Claude Codeの使い方</h2>
+    <div class="narrative">
+      <p>あなたは<strong>高度な自動化とワークフローオーケストレーター</strong>であり、カスタムスラッシュコマンド（`/urfc`や`/rrfc`など）を構築して、Claude Codeで複雑な多段階RFCプロセスを駆動しています。わずか3日間で911セッション、284コミットを生成し、416時間の計算時間を費やしたことから、<strong>大規模な並列ワークロード</strong>を実行していることは明らかです。TaskCreate（2,308回）とTaskUpdate（2,439回）のツール使用数の多さは、1セッションで3つの並列レビュータスクを起動するなど、多数のサブタスクを同時に生成していることを裏付けています。対話スタイルは会話型というよりも<strong>トリガー＆委任型</strong>です：コマンドを発行し、ファイルの読み取り、ブランチのチェックアウト、PRコメントの収集、更新の生成という精巧な定義済みパイプラインの実行をClaudeに任せています。</p>
+<p>作業は<strong>ドキュメントとRFCライフサイクル管理</strong>に圧倒的に集中しています。ドキュメント更新、PRコメント対応、ドキュメントレビューが主要な目標であり、Markdownが最も使用される言語です。セッション中に作業を中断したり軌道修正することは稀で、代わりにセッションが作業進行中のまま終了することが多く（57件中45件が「部分的に達成」）、複数セッションにまたがる、または後で再開する<strong>長時間実行の非同期ワークフロー</strong>に慣れていることを示唆しています。フリクションパターン — Claudeが存在しない`feature/`ブランチをチェックアウトしようとしてから正しい`rfc/`ブランチを見つけた — は、自動化の規模を考えると比較的軽微であり、32件の先回り対応はClaudeがパイプラインを概ね適切にナビゲートしていることを示しています。</p>
+<p>あなたのスタイルは明確に<strong>インフラ志向</strong>です：個別のタスクを会話的に反復するのではなく、RFC作成、レビュー、更新サイクルの反復的な作業を処理する再利用可能なコマンドパイプラインの構築に投資しています。25件のマルチファイル変更の成功とBash多用のツール使用（7,227回）は、Claude Codeを対話型コーディングアシスタントとしてではなく、<strong>ドキュメントワークフローのCI/CDエンジン</strong>として扱っていることを裏付けています。</p>
+      <div class="key-insight"><strong>主要パターン：</strong>カスタムスラッシュコマンドを通じて、Claude Codeを並列自動化エンジンとして運用し、最小限の対話的ガイダンスで複雑な多段階RFCワークフローを委任しています。</div>
+    </div>
+
+
+    <!-- ユーザー応答時間分布 -->
+    <div class="chart-card" style="margin: 24px 0;">
+      <div class="chart-title">ユーザー応答時間の分布</div>
+      <div class="bar-row">
+        <div class="bar-label">2-10秒</div>
+        <div class="bar-track"><div class="bar-fill" style="width:56.61538461538461%;background:#6366f1"></div></div>
+        <div class="bar-value">184</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">10-30秒</div>
+        <div class="bar-track"><div class="bar-fill" style="width:69.53846153846153%;background:#6366f1"></div></div>
+        <div class="bar-value">226</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">30秒-1分</div>
+        <div class="bar-track"><div class="bar-fill" style="width:32.61538461538461%;background:#6366f1"></div></div>
+        <div class="bar-value">106</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">1-2分</div>
+        <div class="bar-track"><div class="bar-fill" style="width:53.230769230769226%;background:#6366f1"></div></div>
+        <div class="bar-value">173</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">2-5分</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#6366f1"></div></div>
+        <div class="bar-value">325</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">5-15分</div>
+        <div class="bar-track"><div class="bar-fill" style="width:66.76923076923077%;background:#6366f1"></div></div>
+        <div class="bar-value">217</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">15分超</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.2307692307692308%;background:#6366f1"></div></div>
+        <div class="bar-value">4</div>
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
+        中央値: 83.6秒 &bull; 平均値: 166.3秒
+      </div>
+    </div>
+
+    <!-- マルチクローディング セクション -->
+    <div class="chart-card" style="margin: 24px 0;">
+      <div class="chart-title">マルチクローディング（並列セッション）</div>
+
+        <div style="display: flex; gap: 24px; margin: 12px 0;">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">15</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">重複イベント</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">22</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">関与セッション数</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">2%</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">メッセージ割合</div>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: #475569; margin-top: 12px;">
+          複数のClaude Codeセッションを同時に実行しています。マルチクローディングは、セッションが時間的に重複している場合に検出され、並列ワークフローを示唆します。
+        </p>
+
+    </div>
+
+    <!-- 時間帯別・ツールエラー -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title" style="display: flex; align-items: center; gap: 12px;">
+          時間帯別ユーザーメッセージ
+          <select id="timezone-select" style="font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <option value="0">太平洋時間 (UTC-8)</option>
+            <option value="3">東部時間 (UTC-5)</option>
+            <option value="8">ロンドン (UTC)</option>
+            <option value="9">中央ヨーロッパ (UTC+1)</option>
+            <option value="17" selected>東京 (UTC+9)</option>
+            <option value="custom">カスタムオフセット...</option>
+          </select>
+          <input type="number" id="custom-offset" placeholder="UTCオフセット" style="display: none; width: 80px; font-size: 12px; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0;">
+        </div>
+        <div id="hour-histogram">
+      <div class="bar-row">
+        <div class="bar-label">朝 (6-12)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1923</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">午後 (12-18)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:93.60374414976599%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1800</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">夜 (18-24)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:7.956318252730108%;background:#8b5cf6"></div></div>
+        <div class="bar-value">153</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">深夜 (0-6)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:69.89079563182527%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1344</div>
+      </div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">ツールエラー</div>
+        <div class="bar-row">
+        <div class="bar-label">コマンド失敗</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#dc2626"></div></div>
+        <div class="bar-value">333</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">その他</div>
+        <div class="bar-track"><div class="bar-fill" style="width:80.78078078078079%;background:#dc2626"></div></div>
+        <div class="bar-value">269</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">ファイル未検出</div>
+        <div class="bar-track"><div class="bar-fill" style="width:31.53153153153153%;background:#dc2626"></div></div>
+        <div class="bar-value">105</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">ユーザー拒否</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20.42042042042042%;background:#dc2626"></div></div>
+        <div class="bar-value">68</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">編集失敗</div>
+        <div class="bar-track"><div class="bar-fill" style="width:6.306306306306306%;background:#dc2626"></div></div>
+        <div class="bar-value">21</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">ファイルサイズ超過</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.504504504504505%;background:#dc2626"></div></div>
+        <div class="bar-value">15</div>
+      </div>
+      </div>
+    </div>
+
+
+    <h2 id="section-wins">注目すべき成果</h2>
+    <p class="section-intro">わずか3日間で911セッションという大規模なClaude Code運用を実現しており、カスタムスラッシュコマンドを活用したRFCドキュメントワークフローに特化しています。</p>
+    <div class="big-wins">
+
+        <div class="big-win">
+          <div class="big-win-title">カスタムRFCコマンド自動化</div>
+          <div class="big-win-desc">/urfcや/rrfcといったカスタムスラッシュコマンドを構築し、複雑なRFCワークフローを自動的にオーケストレーションしています。これらのコマンドは関連ファイルの読み取り、ブランチのチェックアウト、更新の調整を処理し、手動の多段階プロセスを単一のトリガーに変換しています。</div>
+        </div>
+
+        <div class="big-win">
+          <div class="big-win-title">並列レビュータスクのオーケストレーション</div>
+          <div class="big-win-desc">Claudeのタスクシステムを2,300回以上のTaskCreateと2,400回以上のTaskUpdate呼び出しで広範に活用し、並列RFCレビューを同時に実行しています。/rrfcコマンドは複数のレビュータスクを並列起動し、チーム全体のドキュメントレビューサイクルのスループットを大幅に向上させています。</div>
+        </div>
+
+        <div class="big-win">
+          <div class="big-win-title">PRコメント駆動のRFC更新</div>
+          <div class="big-win-desc">PRレビュアーのコメントがカスタムコマンドを通じて自動的にRFC更新を駆動する緊密なフィードバックループを確立しています。22件のPRコメント対応セッションと25件のドキュメント更新目標により、Claudeを使用してレビュアーのフィードバックを体系的に収集・分析し、RFCドキュメントに変更を反映しています。</div>
+        </div>
+
+    </div>
+
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">最も役立った機能（Claudeの能力）</div>
+        <div class="bar-row">
+        <div class="bar-label">先回り対応</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#16a34a"></div></div>
+        <div class="bar-value">32</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">マルチファイル変更</div>
+        <div class="bar-track"><div class="bar-fill" style="width:78.125%;background:#16a34a"></div></div>
+        <div class="bar-value">25</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">達成度</div>
+        <div class="bar-row">
+        <div class="bar-label">部分的に達成</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">45</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">概ね達成</div>
+        <div class="bar-track"><div class="bar-fill" style="width:22.22222222222222%;background:#8b5cf6"></div></div>
+        <div class="bar-value">10</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">不明</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.444444444444445%;background:#8b5cf6"></div></div>
+        <div class="bar-value">2</div>
+      </div>
+      </div>
+    </div>
+
+
+    <h2 id="section-friction">問題が発生する箇所</h2>
+    <p class="section-intro">セッションの多くが部分的な達成にとどまっており、自動化されたRFCワークフローが意図した変更を完了する前に停滞またはタイムアウトすることが頻繁にあることを示しています。</p>
+    <div class="friction-categories">
+
+        <div class="friction-category">
+          <div class="friction-title">作業完了前にセッションが終了する</div>
+          <div class="friction-desc">57セッション中45セッションが部分的な達成にとどまり、Claudeが実際の編集を行う前にセッションが終了するケースが複数ありました。/urfcや/rrfcなどのカスタムコマンドは、広範なファイル読み取りと分析フェーズをトリガーし、コンテキストや時間を消費しすぎて、変更が適用される前にセッションが終了してしまいます。ワークフローをより小さく的を絞ったステップに分割することを検討してください — 例えば「コンテキスト収集」フェーズと「編集適用」フェーズを分離するなど。</div>
+          <ul class="friction-examples"><li>/urfcコマンドでレビューフィードバックに基づくRFC更新を実行した際、Claudeはすべての関連ファイルを読み取りコードベースを調査しましたが、実際の編集が行われる前にセッションが終了しました</li><li>PRコメント対応セッションでClaudeがレビュアーのフィードバックを正常に収集・分析しましたが、RFC更新が完了する前にセッションが終了しました</li></ul>
+        </div>
+
+        <div class="friction-category">
+          <div class="friction-title">ブランチとリポジトリの誤った前提</div>
+          <div class="friction-desc">Claudeがブランチ命名規則について誤った前提を立て、失敗した操作に時間を浪費しました。カスタムコマンドに明示的なブランチコンテキストを追加するか、CLAUDE.mdにブランチ命名パターンを含めることで、Claudeが推測する必要がなくなります。</div>
+          <ul class="friction-examples"><li>Claudeが存在しないfeature/ブランチをチェックアウトしようとした後、PRが実際にはrfc/ブランチにあることに気付き、失敗したgit操作に時間を浪費しました</li><li>既に存在するドキュメントに対してRFC作成をトリガーしたケースがあり、コマンドに事前チェックが不足していることを示唆しています — Claudeは回復しましたが、最初の誤ったアプローチにより時間を消費しました</li></ul>
+        </div>
+
+        <div class="friction-category">
+          <div class="friction-title">完了率に見合わない過度な並列化</div>
+          <div class="friction-desc">TaskCreate（2,308回）とTaskUpdate（2,439回）を広範に使用して並列サブタスクを実行していますが、概ね達成が10件に対して部分的達成が45件であり、並列化が個々のスレッドの完了を保証せずに作業を断片化しているように見えます。並列レビュータスクの数を削減するか、チェックポイントを追加して部分的な進捗を保存・再開可能にすることを検討してください。</div>
+          <ul class="friction-examples"><li>/rrfcコマンドが1つのRFCに対して3つの並列レビュータスクを起動し、セッションウィンドウ内で完了できたかもしれない逐次的アプローチの代わりに、複数のサブエージェントにコンテキストを分散させました</li><li>911セッション全体で7,227回のBash呼び出しと6,969回のRead呼び出しに対し、3,058回のEditと1,471回のWriteという比率は、セッション時間の大部分がコンテキスト収集に費やされ、出力の生成にはあまり使われていないことを示唆しています</li></ul>
+        </div>
+
+    </div>
+
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">主なフリクションの種類</div>
+        <div class="bar-row">
+        <div class="bar-label">誤ったアプローチ</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#dc2626"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">推定満足度（モデル推定）</div>
+        <p class="empty">データなし</p>
+      </div>
+    </div>
+
+
+
+    <h2 id="section-features">試すべきClaude Code機能</h2>
+    <div class="claude-md-section">
+      <h3>CLAUDE.mdへの追加候補</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Claude Codeにコピー＆ペーストするだけでCLAUDE.mdに追加できます。</p>
+      <div class="claude-md-actions">
+        <button class="copy-all-btn" onclick="copyAllCheckedClaudeMd()">チェック項目をすべてコピー</button>
+      </div>
+
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-0" class="cmd-checkbox" checked data-text="CLAUDE.mdのトップレベルに新しい ## Git規約 セクションとして追加&#10;&#10;RFCに関連するブランチは `rfc/` という命名規則に従います（`feature/` ではありません）。チェックアウトを試みる前に、必ず `git branch -a | grep rfc` で既存ブランチを確認してください。">
+          <label for="cmd-0">
+            <code class="cmd-code">RFCに関連するブランチは `rfc/` という命名規則に従います（`feature/` ではありません）。チェックアウトを試みる前に、必ず `git branch -a | grep rfc` で既存ブランチを確認してください。</code>
+            <button class="copy-btn" onclick="copyCmdItem(0)">コピー</button>
+          </label>
+          <div class="cmd-why">Claudeが実際の規則では `rfc/` プレフィックスを使用しているにもかかわらず、繰り返し `feature/` ブランチをチェックアウトしようとし、複数のセッションでフリクションが発生しました。</div>
+        </div>
+
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-1" class="cmd-checkbox" checked data-text="CLAUDE.mdに新しい ## ワークフロー優先事項 セクションとして追加&#10;&#10;長時間実行のRFCワークフロー（/urfc、/rrfc、PRコメント対応）では、セッション終了前に必ずすべてのファイル編集を完了し、変更をコミットしてください。レビューフィードバックに基づくRFC更新タスクの場合、網羅的なコードベース調査よりも編集の実行を優先してください。">
+          <label for="cmd-1">
+            <code class="cmd-code">長時間実行のRFCワークフロー（/urfc、/rrfc、PRコメント対応）では、セッション終了前に必ずすべてのファイル編集を完了し、変更をコミットしてください。レビューフィードバックに基づくRFC更新タスクの場合、網羅的なコードベース調査よりも編集の実行を優先してください。</code>
+            <button class="copy-btn" onclick="copyCmdItem(1)">コピー</button>
+          </label>
+          <div class="cmd-why">複数のセッションで、Claudeが「読み取りと調査」フェーズのまま実際の編集を行わずにセッションが終了し、57セッション中45セッションが部分的達成にとどまりました。</div>
+        </div>
+
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-2" class="cmd-checkbox" checked data-text="CLAUDE.mdの ## RFCワークフロー セクションに追加&#10;&#10;新しいRFCを作成する前に、`find . -name '*.md' -path '*/rfc/*'` を実行するか関連ディレクトリを検索して、既に存在するかどうかを必ず確認してください。">
+          <label for="cmd-2">
+            <code class="cmd-code">新しいRFCを作成する前に、`find . -name '*.md' -path '*/rfc/*'` を実行するか関連ディレクトリを検索して、既に存在するかどうかを必ず確認してください。</code>
+            <button class="copy-btn" onclick="copyCmdItem(2)">コピー</button>
+          </label>
+          <div class="cmd-why">少なくとも1つのセッションで、既に存在するRFCを作成しようとして、Claudeが重複を検出するまで時間を浪費しました。</div>
+        </div>
+
+    </div>
+
+
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Claude Codeにコピー＆ペーストするだけでセットアップできます。</p>
+    <div class="features-section">
+
+        <div class="feature-card">
+          <div class="feature-title">Hooks</div>
+          <div class="feature-oneliner">ツール実行前後など、特定のライフサイクルイベントでシェルコマンドを自動実行します。</div>
+          <div class="feature-why"><strong>あなたへのメリット：</strong>284コミットとRFCワークフローの頻繁な利用を考えると、git操作前にブランチ命名規則の検証（`rfc/`プレフィックスの確認）を自動化でき、Claudeが誤ったブランチをチェックアウトする繰り返しのフリクションを排除できます。</div>
+
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code">// .claude/settings.json
+{
+  &quot;hooks&quot;: {
+    &quot;preTool&quot;: [
+      {
+        &quot;matcher&quot;: &quot;Bash&quot;,
+        &quot;command&quot;: &quot;if echo \&quot;$CC_TOOL_INPUT\&quot; | grep -q 'checkout.*feature/'; then echo 'WARNING: Use rfc/ branch prefix, not feature/' &gt;&amp;2; exit 1; fi&quot;
+      }
+    ]
+  }
+}</code>
+                <button class="copy-btn" onclick="copyText(this)">コピー</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-title">カスタムスキル</div>
+          <div class="feature-oneliner">単一の /コマンド で実行できる再利用可能なプロンプトファイルです。</div>
+          <div class="feature-why"><strong>あなたへのメリット：</strong>/urfcと/rrfcスキルを頻繁に使用していますが、編集が行われる前にセッションが終了することが多いです。これらのスキル定義に明示的な完了基準（例：「終了前に必ず変更をコミットすること」）を含めることで、79%の部分的達成率を大幅に改善できます。</div>
+
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code"># .claude/skills/urfc/SKILL.md
+## レビューフィードバックに基づくRFC更新
+1. RFCファイルとすべてのレビューコメントを読む
+2. 要求された具体的な変更を特定する
+3. RFCにすべての編集を行う（調査で止まらない）
+4. `git diff` を実行して変更を確認する
+5. コミットメッセージ「Update RFC based on review feedback」でコミットする
+
+重要：編集がコミットされるまでセッションを終了しないこと。網羅的なコードベース探索よりも変更の実行を優先すること。</code>
+                <button class="copy-btn" onclick="copyText(this)">コピー</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-title">タスクエージェント</div>
+          <div class="feature-oneliner">Claudeが並列作業のために専用のサブエージェントを生成します。</div>
+          <div class="feature-why"><strong>あなたへのメリット：</strong>TaskCreate（2,308回）とTask（640回）を並列RFCレビューに広範に使用しています。/rrfcスキルを構造化してサブエージェントの責任を明示的に定義することで、各レビュー項目が独立して完了し、セッションがタイムアウトする前に完了しないリスクを軽減できます。</div>
+
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code">このプロンプトを使用: 「このRFCに3つの並列レビューエージェントを起動してください：エージェント1はコードベースに対する技術的正確性をレビュー、エージェント2はRFCテンプレートに対する完全性をレビュー、エージェント3は実装の実現可能性をレビュー。各エージェントは500語以内のサマリーを作成すること。」</code>
+                <button class="copy-btn" onclick="copyText(this)">コピー</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+    </div>
+
+
+    <h2 id="section-patterns">Claude Codeの新しい活用パターン</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Claude Codeにコピー＆ペーストするだけで、ガイドに沿って進められます。</p>
+    <div class="patterns-section">
+
+        <div class="pattern-card">
+          <div class="pattern-title">セッションが完了前に終了する問題</div>
+          <div class="pattern-summary">79%のセッションが目標を部分的にしか達成できておらず、主な原因はClaudeが編集前のファイル読み取りに時間をかけすぎていることです。</div>
+          <div class="pattern-detail">RFC更新とレビューのワークフロー全体で、Claudeは一貫してすべての関連ファイルを読み取り、コードベースを徹底的に調査しますが、実際の変更がコミットされる前にセッションが終了します。このパターンは分析した5セッション中少なくとも3セッションで確認されました。カスタムスキルに明示的なタイムボクシングまたは「編集優先」の指示を追加することで、Claudeに調査よりも出力を優先させることができます。スキルには「編集を完了してコミットする」という必須指示を含めるべきです。</div>
+
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Claude Codeに貼り付け：</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">レビューフィードバックに基づいてRFCを更新してください。重要：調査は3分間の読み取りに制限すること。その後すぐに編集を開始してください。追加の調査を行う前に、すべての変更をコミットしてください。</code>
+              <button class="copy-btn" onclick="copyText(this)">コピー</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="pattern-card">
+          <div class="pattern-title">Bashの多用をバリデーションに活用する</div>
+          <div class="pattern-summary">7,227回のBash呼び出しがあるため、RFCワークフローに自動バリデーションステップを追加しましょう。</div>
+          <div class="pattern-detail">あなたは最もBashを多用するパターンのユーザーであり、広範なシェルコマンドを実行しています。これを構造化されたバリデーションに活用しましょう：RFC編集のたびに、Markdownリンターの自動実行、壊れたリンクのチェック、RFCがテンプレート構造に従っているかの検証を行います。これにより、Bash多用のワークフローを単なる探索からクオリティゲートに変換できます。ドキュメント更新とPRコメント対応が上位の目標であることを考えると、編集後の自動バリデーションはPRレビュー前に問題を検出できます。</div>
+
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Claude Codeに貼り付け：</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">このRFCを更新した後、以下のバリデーションを実行してください：1) すべてのセクションヘッダーがRFCテンプレートと一致しているか確認、2) コード参照がすべて既存ファイルを指しているか検証、3) markdownlintが利用可能であれば実行、4) 行った変更のgit diffサマリーを表示。</code>
+              <button class="copy-btn" onclick="copyText(this)">コピー</button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="pattern-card">
+          <div class="pattern-title">RFCレビューをシングルパスワークフローに統合する</div>
+          <div class="pattern-summary">/rrfcレビューと/urfc更新を統合して、コンテキストの損失を避ける一貫したワークフローにしましょう。</div>
+          <div class="pattern-detail">現在、並列レビュー（/rrfc）を実行した後、個別に更新（/urfc）をトリガーし、PRコメント対応も別セッションとして処理しています。セッションの再開ごとにコンテキストが失われます。レビュー、フィードバックの統合、編集、コミットを1パスで行う統合スキルの作成を検討してください。わずか3日間で911セッションという状況を考えると、ステップの統合によりセッション数を削減することで、スループットと完了率を大幅に改善できます。</div>
+
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Claude Codeに貼り付け：</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">このRFCをすべてのオープンPRコメントと既存のレビューフィードバックに対してレビューしてください。各フィードバックについて：1) 変更が必要かどうか判断、2) 必要であればすぐに変更を実行、3) PRに変更を認識するコメントを追加。完了後にすべての更新をコミットしてください。</code>
+              <button class="copy-btn" onclick="copyText(this)">コピー</button>
+            </div>
+          </div>
+
+        </div>
+
+    </div>
+
+
+
+
+    <h2 id="section-horizon">今後の展望</h2>
+    <p class="section-intro">あなたのチームは並列レビューエージェントを備えた高度なRFC自動化を構築しており、データはこれらのワークフローを部分的達成から完全自律に進化させる明確な機会を示しています。</p>
+    <div class="horizon-section">
+
+        <div class="horizon-card">
+          <div class="horizon-title">エンドツーエンドの自律型RFC更新パイプライン</div>
+          <div class="horizon-possible">57セッション中45セッションが部分的達成にとどまっており、主な原因は編集が完了する前にセッションが終了したことです。自律型パイプラインは、レビューコメントの読み取り、すべてのRFC更新の起草、元のフィードバックに対する変更の検証、コミットまでを人間の介入なしに実行できます。明示的な完了ゲートを持つタスクチェーンにより、セッションが編集途中で終了するパターンを排除できます。</div>
+          <div class="horizon-tip"><strong>始め方：</strong>/urfcコマンドをリファクタリングし、依存関係のあるサブタスクを持つTaskCreateを使用して、エージェントがコミットとプッシュを完了してから完了とマークする最終自己検証ステップを含めます。</div>
+          <div class="pattern-prompt"><div class="prompt-label">Claude Codeに貼り付け：</div><code>あなたは自律型RFC更新エージェントです。以下のパイプラインを正確に実行してください：
+
+1. 収集：RFCファイル、リンクされたすべてのPRコメント、レビュータスクの出力を読み取ります。すべてのフィードバックをチェックリストとしてまとめます。
+2. 計画：各フィードバック項目を特定のRFCセクションと提案する変更にマッピングする、セクションごとの編集計画を作成します。
+3. 実行：RFCファイルにすべての編集を適用します。各編集について、どのフィードバック項目に対応しているかを示すインラインコメントを残します。
+4. 検証：更新されたRFCを再度読み取り、フィードバックチェックリストと照合します。すべての項目が対処されている必要があります — 不足がある場合はここで修正します。
+5. コミット：変更をステージングし、「docs: update RFC per review feedback — addresses N comments」というメッセージでコミットし、現在のブランチにプッシュします。
+6. レポート：フィードバック項目 | 修正セクション | ステータス（完了/スキップと理由）の列を持つMarkdownサマリーテーブルを出力します。
+
+ステップ間で中断したり確認を求めないでください。あいまいなコメントに遭遇した場合は、最善の判断を下してレポートに記載してください。</code><button class="copy-btn" onclick="copyText(this)">コピー</button></div>
+        </div>
+
+        <div class="horizon-card">
+          <div class="horizon-title">合意形成型の並列マルチレビュアーエージェント</div>
+          <div class="horizon-possible">すでに3つの並列レビュータスクを起動していますが、それぞれが独立して動作しています。5つの専門レビュアーエージェント — アーキテクチャ、セキュリティ、パフォーマンス、API設計、ドキュメント品質 — を生成し、シンセサイザーエージェントが発見事項を統合、矛盾を解決し、優先順位付きのアクションプランを作成することを想像してください。これにより、レビューがバラバラなコメントのリストから、一貫した重み付きの推奨事項に変わります。</div>
+          <div class="horizon-tip"><strong>始め方：</strong>/rrfcコマンドを拡張してロール固有のレビューTaskを生成し、すべてのレビュアーの完了に依存する最終シンセサイザーTaskを追加します。TaskUpdateを使用して調整します。</div>
+          <div class="pattern-prompt"><div class="prompt-label">Claude Codeに貼り付け：</div><code>専門エージェントによる並列RFCレビューを起動してください。それぞれ異なるペルソナと評価基準を持つ5つのレビュータスクを作成してください：
+
+1. アーキテクチャレビュアー：システム境界、コンポーネントの責任、結合度、スケーラビリティを評価。アーキテクチャのアンチパターンを指摘。
+2. セキュリティレビュアー：脅威ベクトル、認証のギャップ、データ露出リスク、バリデーション不足を特定。該当する場合はOWASPカテゴリを参照。
+3. パフォーマンスレビュアー：想定される負荷パターンを分析、ボトルネックの特定、キャッシュ戦略の評価、O(n²)以上のアルゴリズムを指摘。
+4. API設計レビュアー：既存APIとの一貫性、命名規則、バージョニング戦略、後方互換性をチェック。
+5. ドキュメント品質レビュアー：明確さ、完全性、不足している図、あいまいな要件、新しいエンジニアがこの仕様だけで実装できるかどうかを評価。
+
+各レビュアーは以下の形式で出力：{severity: critical|major|minor, section: string, finding: string, recommendation: string}[]
+
+5つすべてが完了した後、シンセサイザーとして動作：すべての発見事項を統合、重複を排除、矛盾を解決（理由を説明）し、RFC作成者が行うべき変更の最終優先順位付きリストを優先度別にグループ化して作成。</code><button class="copy-btn" onclick="copyText(this)">コピー</button></div>
+        </div>
+
+        <div class="horizon-card">
+          <div class="horizon-title">ブランチ認識型ワークフローと自動リカバリー</div>
+          <div class="horizon-possible">フリクションデータは、エージェントが存在しないブランチをチェックアウトしようとするケースを示しています — 進行を妨げるシンプルなエラーです。自動リカバリーレイヤーは、gitの失敗を検出し、PRメタデータから正しいブランチを推測し、数秒で自己修正できます。プリフライトチェックと組み合わせることで、ワークフロー障害のクラス全体を排除し、「誤ったアプローチ」のフリクション数を22からゼロに近づけることができます。</div>
+          <div class="horizon-tip"><strong>始め方：</strong>カスタムスラッシュコマンドにプリフライト検証ステップを追加し、git操作の前にPR/RFCメタデータから正しいブランチを解決します。BashでgitとGitHub APIをクエリします。</div>
+          <div class="pattern-prompt"><div class="prompt-label">Claude Codeに貼り付け：</div><code>RFCワークフローを開始する前に、このプリフライトチェックリストを実行してください：
+
+1. `git fetch --all --prune` を実行してリモート状態を同期。
+2. コマンド入力からPR番号またはRFC識別子を抽出。
+3. 正しいブランチをクエリ：`gh pr view <PR_NUMBER> --json headRefName -q .headRefName` を実行して実際のブランチ名を取得。PR番号がない場合は `gh pr list --search '<RFC_NAME>' --json number,headRefName` で検索。
+4. ブランチがローカルとリモートに存在することを確認：`git branch -a | grep <branch_name>`。
+5. ブランチがローカルに存在しない場合、リモートをトラッキングして作成：`git checkout -b <branch> origin/<branch>`。
+6. 正しいブランチにいることを確認：`git branch --show-current`。
+7. RFCファイルが想定されるパスに存在することを確認。存在しない場合、`find . -name '*<rfc_slug>*' -type f` で検索。
+
+すべてのチェックがパスした後にのみ、「プリフライト完了：ブランチ <branch> のファイル <path> で作業開始準備完了」と出力し、メインワークフローを続行してください。チェックが失敗した場合、エラーを報告する前に自動リカバリーを試みてください。</code><button class="copy-btn" onclick="copyText(this)">コピー</button></div>
+        </div>
+
+    </div>
+
+
+
+    <div class="fun-ending">
+      <div class="fun-headline">「Claudeは自信満々にfeatureブランチをチェックアウトしようとしましたが、存在せず、PRが実はrfc/ブランチにあったことに気まずそうに気付きました」</div>
+      <div class="fun-detail">PRコメント対応ワークフロー中、Claudeは完全な自信を持ってfeature/ブランチを探しに行きましたが、実際にはrfc/ブランチで作業が行われていたことに気付いて引き返すことになりました — わずか3日間で911セッションが実行されるコードベースにおける、典型的な「廊下を間違えた」瞬間でした。</div>
+    </div>
+
+
+
+  </div>
+  <script>
+    function toggleCollapsible(header) {
+      header.classList.toggle('open');
+      const content = header.nextElementSibling;
+      content.classList.toggle('open');
+    }
+    function copyText(btn) {
+      const code = btn.previousElementSibling;
+      navigator.clipboard.writeText(code.textContent).then(() => {
+        btn.textContent = 'コピー済み!';
+        setTimeout(() => { btn.textContent = 'コピー'; }, 2000);
+      });
+    }
+    function copyCmdItem(idx) {
+      const checkbox = document.getElementById('cmd-' + idx);
+      if (checkbox) {
+        const text = checkbox.dataset.text;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = checkbox.nextElementSibling.querySelector('.copy-btn');
+          if (btn) { btn.textContent = 'コピー済み!'; setTimeout(() => { btn.textContent = 'コピー'; }, 2000); }
+        });
+      }
+    }
+    function copyAllCheckedClaudeMd() {
+      const checkboxes = document.querySelectorAll('.cmd-checkbox:checked');
+      const texts = [];
+      checkboxes.forEach(cb => {
+        if (cb.dataset.text) { texts.push(cb.dataset.text); }
+      });
+      const combined = texts.join('\n');
+      const btn = document.querySelector('.copy-all-btn');
+      if (btn) {
+        navigator.clipboard.writeText(combined).then(() => {
+          btn.textContent = texts.length + '件コピー済み!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'チェック項目をすべてコピー'; btn.classList.remove('copied'); }, 2000);
+        });
+      }
+    }
+    // タイムゾーンセレクタ
+    const rawHourCounts = {"0":1045,"1":299,"9":148,"10":561,"11":1214,"12":10,"14":86,"15":407,"16":654,"17":643,"18":100,"23":53};
+    function updateHourHistogram(offsetFromPT) {
+      const periods = [
+        { label: "朝 (6-12)", range: [6,7,8,9,10,11] },
+        { label: "午後 (12-18)", range: [12,13,14,15,16,17] },
+        { label: "夜 (18-24)", range: [18,19,20,21,22,23] },
+        { label: "深夜 (0-6)", range: [0,1,2,3,4,5] }
+      ];
+      const adjustedCounts = {};
+      for (const [hour, count] of Object.entries(rawHourCounts)) {
+        const newHour = (parseInt(hour) + offsetFromPT + 24) % 24;
+        adjustedCounts[newHour] = (adjustedCounts[newHour] || 0) + count;
+      }
+      const periodCounts = periods.map(p => ({
+        label: p.label,
+        count: p.range.reduce((sum, h) => sum + (adjustedCounts[h] || 0), 0)
+      }));
+      const maxCount = Math.max(...periodCounts.map(p => p.count)) || 1;
+      const container = document.getElementById('hour-histogram');
+      container.textContent = '';
+      periodCounts.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = p.label;
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        fill.style.width = (p.count / maxCount) * 100 + '%';
+        fill.style.background = '#8b5cf6';
+        track.appendChild(fill);
+        const value = document.createElement('div');
+        value.className = 'bar-value';
+        value.textContent = p.count;
+        row.appendChild(label);
+        row.appendChild(track);
+        row.appendChild(value);
+        container.appendChild(row);
+      });
+    }
+    // ページ読み込み時に東京時間で初期化
+    updateHourHistogram(17);
+    document.getElementById('timezone-select').addEventListener('change', function() {
+      const customInput = document.getElementById('custom-offset');
+      if (this.value === 'custom') {
+        customInput.style.display = 'inline-block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        updateHourHistogram(parseInt(this.value));
+      }
+    });
+    document.getElementById('custom-offset').addEventListener('change', function() {
+      const offset = parseInt(this.value) + 8;
+      updateHourHistogram(offset);
+    });
+  </script>
+</body>
+</html>

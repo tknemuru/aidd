@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# --- 引数チェック ---
+if [ $# -ne 1 ]; then
+  echo "Usage: rfc-publish <slug>" >&2
+  exit 1
+fi
+
+SLUG="$1"
+
+# --- Git リポジトリ確認 ---
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "エラー: git リポジトリ内で実行してください。" >&2
+  exit 1
+}
+
+# --- ブランチ確認 ---
+CURRENT_BRANCH="$(git branch --show-current)"
+EXPECTED_BRANCH="rfc/${SLUG}"
+
+if [ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]; then
+  echo "エラー: 現在のブランチは ${CURRENT_BRANCH} です。${EXPECTED_BRANCH} で実行してください。" >&2
+  exit 1
+fi
+
+# --- RFCファイル確認 ---
+RFC_PATH="docs/rfcs/${SLUG}/rfc.md"
+
+if [ ! -f "$REPO_ROOT/$RFC_PATH" ]; then
+  echo "エラー: ${RFC_PATH} が見つかりません。" >&2
+  exit 1
+fi
+
+# --- コミット & プッシュ ---
+git add "$REPO_ROOT/$RFC_PATH"
+git commit -m "docs: add RFC draft for ${SLUG}"
+git push -u origin "$EXPECTED_BRANCH"
+
+# --- Draft PR 作成 ---
+if gh pr view "$EXPECTED_BRANCH" >/dev/null 2>&1; then
+  echo "PR は既に存在します。スキップします。"
+else
+  gh pr create --draft \
+    --title "[RFC] ${SLUG}" \
+    --body "## RFC Draft
+
+- **RFC**: \`${RFC_PATH}\`
+- **Branch**: \`${EXPECTED_BRANCH}\`
+
+---
+このPRはAIレビュー完了後に Ready 状態になります。"
+  echo "Draft PR を作成しました。"
+fi
+
+echo "完了: ${RFC_PATH} を ${EXPECTED_BRANCH} にプッシュしました。"

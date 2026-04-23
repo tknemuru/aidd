@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Claude Code Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #f8fafc; color: #334155; line-height: 1.65; padding: 48px 24px; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 32px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+    h2 { font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 48px; margin-bottom: 16px; }
+    .subtitle { color: #64748b; font-size: 15px; margin-bottom: 32px; }
+    .nav-toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 32px 0; padding: 16px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .nav-toc a { font-size: 12px; color: #64748b; text-decoration: none; padding: 6px 12px; border-radius: 6px; background: #f1f5f9; transition: all 0.15s; }
+    .nav-toc a:hover { background: #e2e8f0; color: #334155; }
+    .stats-row { display: flex; gap: 24px; margin-bottom: 40px; padding: 20px 0; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #0f172a; }
+    .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; }
+    .at-a-glance { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 20px 24px; margin-bottom: 32px; }
+    .glance-title { font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 16px; }
+    .glance-sections { display: flex; flex-direction: column; gap: 12px; }
+    .glance-section { font-size: 14px; color: #78350f; line-height: 1.6; }
+    .glance-section strong { color: #92400e; }
+    .see-more { color: #b45309; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    .see-more:hover { text-decoration: underline; }
+    .project-areas { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .project-area { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .area-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .area-name { font-weight: 600; font-size: 15px; color: #0f172a; }
+    .area-count { font-size: 12px; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; }
+    .area-desc { font-size: 14px; color: #475569; line-height: 1.5; }
+    .narrative { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px; }
+    .narrative p { margin-bottom: 12px; font-size: 14px; color: #475569; line-height: 1.7; }
+    .key-insight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 14px; color: #166534; }
+    .section-intro { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+    .big-wins { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .big-win { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; }
+    .big-win-title { font-weight: 600; font-size: 15px; color: #166534; margin-bottom: 8px; }
+    .big-win-desc { font-size: 14px; color: #15803d; line-height: 1.5; }
+    .friction-categories { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+    .friction-category { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 16px; }
+    .friction-title { font-weight: 600; font-size: 15px; color: #991b1b; margin-bottom: 6px; }
+    .friction-desc { font-size: 13px; color: #7f1d1d; margin-bottom: 10px; }
+    .friction-examples { margin: 0 0 0 20px; font-size: 13px; color: #334155; }
+    .friction-examples li { margin-bottom: 4px; }
+    .claude-md-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .claude-md-section h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0 0 12px 0; }
+    .claude-md-actions { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dbeafe; }
+    .copy-all-btn { background: #2563eb; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+    .copy-all-btn:hover { background: #1d4ed8; }
+    .copy-all-btn.copied { background: #16a34a; }
+    .claude-md-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
+    .claude-md-item:last-child { border-bottom: none; }
+    .cmd-checkbox { margin-top: 2px; }
+    .cmd-code { background: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #1e40af; border: 1px solid #bfdbfe; font-family: monospace; display: block; white-space: pre-wrap; word-break: break-word; flex: 1; }
+    .cmd-why { font-size: 12px; color: #64748b; width: 100%; padding-left: 24px; margin-top: 4px; }
+    .features-section, .patterns-section { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+    .feature-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; }
+    .pattern-card { background: #f0f9ff; border: 1px solid #7dd3fc; border-radius: 8px; padding: 16px; }
+    .feature-title, .pattern-title { font-weight: 600; font-size: 15px; color: #0f172a; margin-bottom: 6px; }
+    .feature-oneliner { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .pattern-summary { font-size: 14px; color: #475569; margin-bottom: 8px; }
+    .feature-why, .pattern-detail { font-size: 13px; color: #334155; line-height: 1.5; }
+    .feature-examples { margin-top: 12px; }
+    .feature-example { padding: 8px 0; border-top: 1px solid #d1fae5; }
+    .feature-example:first-child { border-top: none; }
+    .example-desc { font-size: 13px; color: #334155; margin-bottom: 6px; }
+    .example-code-row { display: flex; align-items: flex-start; gap: 8px; }
+    .example-code { flex: 1; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; overflow-x: auto; white-space: pre-wrap; }
+    .copyable-prompt-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; }
+    .copyable-prompt-row { display: flex; align-items: flex-start; gap: 8px; }
+    .copyable-prompt { flex: 1; background: #f8fafc; padding: 10px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #334155; border: 1px solid #e2e8f0; white-space: pre-wrap; line-height: 1.5; }
+    .feature-code { background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0; display: flex; align-items: flex-start; gap: 8px; }
+    .feature-code code { flex: 1; font-family: monospace; font-size: 12px; color: #334155; white-space: pre-wrap; }
+    .pattern-prompt { background: #f8fafc; padding: 12px; border-radius: 6px; margin-top: 12px; border: 1px solid #e2e8f0; }
+    .pattern-prompt code { font-family: monospace; font-size: 12px; color: #334155; display: block; white-space: pre-wrap; margin-bottom: 8px; }
+    .prompt-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+    .copy-btn { background: #e2e8f0; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; cursor: pointer; color: #475569; flex-shrink: 0; }
+    .copy-btn:hover { background: #cbd5e1; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+    .chart-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+    .chart-title { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 12px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 6px; }
+    .bar-label { width: 100px; font-size: 11px; color: #475569; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; margin: 0 8px; }
+    .bar-fill { height: 100%; border-radius: 3px; }
+    .bar-value { width: 28px; font-size: 11px; font-weight: 500; color: #64748b; text-align: right; }
+    .empty { color: #94a3b8; font-size: 13px; }
+    .horizon-section { display: flex; flex-direction: column; gap: 16px; }
+    .horizon-card { background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border: 1px solid #c4b5fd; border-radius: 8px; padding: 16px; }
+    .horizon-title { font-weight: 600; font-size: 15px; color: #5b21b6; margin-bottom: 8px; }
+    .horizon-possible { font-size: 14px; color: #334155; margin-bottom: 10px; line-height: 1.5; }
+    .horizon-tip { font-size: 13px; color: #6b21a8; background: rgba(255,255,255,0.6); padding: 8px 12px; border-radius: 4px; }
+    .feedback-header { margin-top: 48px; color: #64748b; font-size: 16px; }
+    .feedback-intro { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
+    .feedback-section { margin-top: 16px; }
+    .feedback-section h3 { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 12px; }
+    .feedback-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .feedback-card.team-card { background: #eff6ff; border-color: #bfdbfe; }
+    .feedback-card.model-card { background: #faf5ff; border-color: #e9d5ff; }
+    .feedback-title { font-weight: 600; font-size: 14px; color: #0f172a; margin-bottom: 6px; }
+    .feedback-detail { font-size: 13px; color: #475569; line-height: 1.5; }
+    .feedback-evidence { font-size: 12px; color: #64748b; margin-top: 8px; }
+    .fun-ending { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fbbf24; border-radius: 12px; padding: 24px; margin-top: 40px; text-align: center; }
+    .fun-headline { font-size: 18px; font-weight: 600; color: #78350f; margin-bottom: 8px; }
+    .fun-detail { font-size: 14px; color: #92400e; }
+    .collapsible-section { margin-top: 16px; }
+    .collapsible-header { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+    .collapsible-header h3 { margin: 0; font-size: 14px; font-weight: 600; color: #475569; }
+    .collapsible-arrow { font-size: 12px; color: #94a3b8; transition: transform 0.2s; }
+    .collapsible-content { display: none; padding-top: 16px; }
+    .collapsible-content.open { display: block; }
+    .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+    @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } .stats-row { justify-content: center; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Claude Code Insights</h1>
+    <p class="subtitle">5,220 messages across 911 sessions | 2026-02-03 to 2026-02-05</p>
+
+    
+    <div class="at-a-glance">
+      <div class="glance-title">At a Glance</div>
+      <div class="glance-sections">
+        <div class="glance-section"><strong>What's working:</strong> You've built an impressive custom command system (/urfc, /rrfc) that turns complex RFC workflows into single triggers — that's a sophisticated use of Claude Code. You're also making strong use of parallel task orchestration to run multiple RFC reviews simultaneously, and you've created a tight loop where PR reviewer comments automatically feed back into document updates. <a href="#section-wins" class="see-more">Impressive Things You Did →</a></div>
+        <div class="glance-section"><strong>What's hindering you:</strong> On Claude's side, sessions are frequently running out of steam before edits actually land — Claude spends too long in the &quot;gather and read&quot; phase, leaving no room to apply changes. On your side, your custom commands may be trying to do too much in a single pass (context gathering + analysis + editing), and Claude lacks explicit guidance on things like branch naming conventions, which leads to wasted cycles on wrong assumptions. <a href="#section-friction" class="see-more">Where Things Go Wrong →</a></div>
+        <div class="glance-section"><strong>Quick wins to try:</strong> Try using hooks to add pre-flight checks (like verifying the correct branch exists) before your RFC commands kick off — this would eliminate the class of errors where Claude guesses wrong on git state. Also consider splitting your /urfc command into two phases: a context-gathering step that saves its findings to a file, and a separate editing step that picks up where it left off, so sessions don't die mid-work. <a href="#section-features" class="see-more">Features to Try →</a></div>
+        <div class="glance-section"><strong>Ambitious workflows:</strong> As models get more capable, aim to consolidate your /rrfc and /urfc into a single end-to-end pipeline that reads review comments, drafts updates, validates against feedback, and commits autonomously. Even more exciting: your parallel reviewer pattern could evolve into specialized reviewer agents (architecture, security, API design) with a synthesizer agent that merges their findings into a single prioritized action plan — turning disconnected review comments into coherent recommendations. <a href="#section-horizon" class="see-more">On the Horizon →</a></div>
+      </div>
+    </div>
+    
+
+    <nav class="nav-toc">
+      <a href="#section-work">What You Work On</a>
+      <a href="#section-usage">How You Use CC</a>
+      <a href="#section-wins">Impressive Things</a>
+      <a href="#section-friction">Where Things Go Wrong</a>
+      <a href="#section-features">Features to Try</a>
+      <a href="#section-patterns">New Usage Patterns</a>
+      <a href="#section-horizon">On the Horizon</a>
+      <a href="#section-feedback">Team Feedback</a>
+    </nav>
+
+    <div class="stats-row">
+      <div class="stat"><div class="stat-value">5,220</div><div class="stat-label">Messages</div></div>
+      <div class="stat"><div class="stat-value">+345,089/-34,292</div><div class="stat-label">Lines</div></div>
+      <div class="stat"><div class="stat-value">2304</div><div class="stat-label">Files</div></div>
+      <div class="stat"><div class="stat-value">3</div><div class="stat-label">Days</div></div>
+      <div class="stat"><div class="stat-value">1740</div><div class="stat-label">Msgs/Day</div></div>
+    </div>
+
+    
+    <h2 id="section-work">What You Work On</h2>
+    <div class="project-areas">
+      
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">RFC Document Updates from Review Feedback</span>
+            <span class="area-count">~2 sessions</span>
+          </div>
+          <div class="area-desc">Users triggered custom /urfc commands to update RFC documents based on review comments and feedback. Claude read all relevant files and investigated the codebase to prepare modifications, though sessions frequently ended before edits were fully completed, resulting in partially achieved outcomes.</div>
+        </div>
+      
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">RFC Review Orchestration</span>
+            <span class="area-count">~1 sessions</span>
+          </div>
+          <div class="area-desc">Users launched parallel RFC review processes using a custom /rrfc command. Claude executed multi-step workflows including branch checkout, file verification, and spawning parallel review tasks to analyze RFC documents from multiple perspectives.</div>
+        </div>
+      
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">PR Comment Response and Reviewer Feedback</span>
+            <span class="area-count">~1 sessions</span>
+          </div>
+          <div class="area-desc">Users triggered PR comment response commands to address reviewer feedback on RFCs. Claude gathered PR comments, analyzed reviewer concerns, and began updating RFC documents accordingly, leveraging multi-file change capabilities across Markdown and JavaScript files.</div>
+        </div>
+      
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">RFC Creation and Discovery</span>
+            <span class="area-count">~1 sessions</span>
+          </div>
+          <div class="area-desc">Users attempted to create new RFC documents, with Claude correctly identifying when an RFC already existed and pivoting to launch a review process instead. This demonstrates Claude's proactive help in avoiding duplicate work and redirecting to appropriate next steps.</div>
+        </div>
+      
+        <div class="project-area">
+          <div class="area-header">
+            <span class="area-name">JavaScript and Markdown Codebase Analysis</span>
+            <span class="area-count">~911 sessions</span>
+          </div>
+          <div class="area-desc">Across all sessions, heavy use of Bash and Read tools indicates extensive codebase exploration, primarily in JavaScript and Markdown files. The high volume of TaskCreate and TaskUpdate calls (combined ~4,700) suggests Claude was heavily used for orchestrating parallel sub-tasks as part of structured RFC and documentation workflows.</div>
+        </div>
+      
+    </div>
+    
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">What You Wanted</div>
+        <div class="bar-row">
+        <div class="bar-label">Document Update</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#2563eb"></div></div>
+        <div class="bar-value">25</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Pr Comment Response</div>
+        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#2563eb"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Document Review</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Document Creation</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Code Review</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20%;background:#2563eb"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top Tools Used</div>
+        <div class="bar-row">
+        <div class="bar-label">Bash</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#0891b2"></div></div>
+        <div class="bar-value">7227</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Read</div>
+        <div class="bar-track"><div class="bar-fill" style="width:96.43005396430054%;background:#0891b2"></div></div>
+        <div class="bar-value">6969</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Edit</div>
+        <div class="bar-track"><div class="bar-fill" style="width:42.31354642313546%;background:#0891b2"></div></div>
+        <div class="bar-value">3058</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">TaskUpdate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:33.74844333748443%;background:#0891b2"></div></div>
+        <div class="bar-value">2439</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">TaskCreate</div>
+        <div class="bar-track"><div class="bar-fill" style="width:31.935796319357962%;background:#0891b2"></div></div>
+        <div class="bar-value">2308</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Glob</div>
+        <div class="bar-track"><div class="bar-fill" style="width:24.7682302476823%;background:#0891b2"></div></div>
+        <div class="bar-value">1790</div>
+      </div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Languages</div>
+        <div class="bar-row">
+        <div class="bar-label">Markdown</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#10b981"></div></div>
+        <div class="bar-value">5623</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">JavaScript</div>
+        <div class="bar-track"><div class="bar-fill" style="width:80.97101191534767%;background:#10b981"></div></div>
+        <div class="bar-value">4553</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">YAML</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.610172505779833%;background:#10b981"></div></div>
+        <div class="bar-value">203</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">JSON</div>
+        <div class="bar-track"><div class="bar-fill" style="width:3.4856837986839766%;background:#10b981"></div></div>
+        <div class="bar-value">196</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Shell</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.39125022230126266%;background:#10b981"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Python</div>
+        <div class="bar-track"><div class="bar-fill" style="width:0.07113640405477503%;background:#10b981"></div></div>
+        <div class="bar-value">4</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Session Types</div>
+        <div class="bar-row">
+        <div class="bar-label">Single Task</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">52</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Multi Task</div>
+        <div class="bar-track"><div class="bar-fill" style="width:9.615384615384617%;background:#8b5cf6"></div></div>
+        <div class="bar-value">5</div>
+      </div>
+      </div>
+    </div>
+
+    
+    <h2 id="section-usage">How You Use Claude Code</h2>
+    <div class="narrative">
+      <p>You are a <strong>heavy automation and workflow orchestrator</strong> who has built custom slash commands (like `/urfc` and `/rrfc`) to drive Claude Code through complex, multi-step RFC processes. With 911 sessions generating 284 commits across just 3 days, and an extraordinary 416 hours of compute time, you are clearly running <strong>massively parallel workloads</strong> — the high TaskCreate (2,308) and TaskUpdate (2,439) tool counts confirm you're spawning numerous sub-tasks simultaneously, such as launching 3 parallel review tasks in a single session. Your interaction style is less conversational and more <strong>trigger-and-delegate</strong>: you issue a command and let Claude execute an elaborate predefined pipeline of reading files, checking out branches, gathering PR comments, and producing updates.</p>
+<p>Your work is overwhelmingly focused on <strong>documentation and RFC lifecycle management</strong> — document updates, PR comment responses, and document reviews dominate your goals, with Markdown as your most-used language by a wide margin. You rarely interrupt or course-correct mid-session; instead, sessions frequently end with work still in progress (45 out of 57 outcomes were only &quot;partially achieved&quot;), suggesting you're comfortable with <strong>long-running, asynchronous workflows</strong> that may span multiple sessions or get picked up later. The friction pattern — Claude once tried to checkout a nonexistent `feature/` branch before finding the correct `rfc/` branch — is relatively minor given the scale of automation, and the 32 instances of proactive help indicate Claude is generally navigating your pipelines well.</p>
+<p>Your style is distinctly <strong>infrastructure-minded</strong>: rather than iterating on individual tasks conversationally, you've invested in building reusable command pipelines that handle the repetitive mechanics of RFC creation, review, and update cycles. The 25 multi-file change successes and the Bash-heavy tool usage (7,227 calls) reinforce that you treat Claude Code as a <strong>CI/CD-like engine for documentation workflows</strong> rather than an interactive coding assistant.</p>
+      <div class="key-insight"><strong>Key pattern:</strong> You operate Claude Code as a parallel automation engine through custom slash commands, delegating complex multi-step RFC workflows with minimal interactive guidance.</div>
+    </div>
+    
+
+    <!-- Response Time Distribution -->
+    <div class="chart-card" style="margin: 24px 0;">
+      <div class="chart-title">User Response Time Distribution</div>
+      <div class="bar-row">
+        <div class="bar-label">2-10s</div>
+        <div class="bar-track"><div class="bar-fill" style="width:56.61538461538461%;background:#6366f1"></div></div>
+        <div class="bar-value">184</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">10-30s</div>
+        <div class="bar-track"><div class="bar-fill" style="width:69.53846153846153%;background:#6366f1"></div></div>
+        <div class="bar-value">226</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">30s-1m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:32.61538461538461%;background:#6366f1"></div></div>
+        <div class="bar-value">106</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">1-2m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:53.230769230769226%;background:#6366f1"></div></div>
+        <div class="bar-value">173</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">2-5m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#6366f1"></div></div>
+        <div class="bar-value">325</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">5-15m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:66.76923076923077%;background:#6366f1"></div></div>
+        <div class="bar-value">217</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">>15m</div>
+        <div class="bar-track"><div class="bar-fill" style="width:1.2307692307692308%;background:#6366f1"></div></div>
+        <div class="bar-value">4</div>
+      </div>
+      <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
+        Median: 83.6s &bull; Average: 166.3s
+      </div>
+    </div>
+
+    <!-- Multi-clauding Section (matching Python reference) -->
+    <div class="chart-card" style="margin: 24px 0;">
+      <div class="chart-title">Multi-Clauding (Parallel Sessions)</div>
+      
+        <div style="display: flex; gap: 24px; margin: 12px 0;">
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">15</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Overlap Events</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">22</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Sessions Involved</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 24px; font-weight: 700; color: #7c3aed;">2%</div>
+            <div style="font-size: 11px; color: #64748b; text-transform: uppercase;">Of Messages</div>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: #475569; margin-top: 12px;">
+          You run multiple Claude Code sessions simultaneously. Multi-clauding is detected when sessions
+          overlap in time, suggesting parallel workflows.
+        </p>
+      
+    </div>
+
+    <!-- Time of Day & Tool Errors -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title" style="display: flex; align-items: center; gap: 12px;">
+          User Messages by Time of Day
+          <select id="timezone-select" style="font-size: 12px; padding: 4px 8px; border-radius: 4px; border: 1px solid #e2e8f0;">
+            <option value="0">PT (UTC-8)</option>
+            <option value="3">ET (UTC-5)</option>
+            <option value="8">London (UTC)</option>
+            <option value="9">CET (UTC+1)</option>
+            <option value="17">Tokyo (UTC+9)</option>
+            <option value="custom">Custom offset...</option>
+          </select>
+          <input type="number" id="custom-offset" placeholder="UTC offset" style="display: none; width: 80px; font-size: 12px; padding: 4px; border-radius: 4px; border: 1px solid #e2e8f0;">
+        </div>
+        <div id="hour-histogram">
+      <div class="bar-row">
+        <div class="bar-label">Morning (6-12)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1923</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Afternoon (12-18)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:93.60374414976599%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1800</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Evening (18-24)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:7.956318252730108%;background:#8b5cf6"></div></div>
+        <div class="bar-value">153</div>
+      </div>
+
+      <div class="bar-row">
+        <div class="bar-label">Night (0-6)</div>
+        <div class="bar-track"><div class="bar-fill" style="width:69.89079563182527%;background:#8b5cf6"></div></div>
+        <div class="bar-value">1344</div>
+      </div></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Tool Errors Encountered</div>
+        <div class="bar-row">
+        <div class="bar-label">Command Failed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#dc2626"></div></div>
+        <div class="bar-value">333</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Other</div>
+        <div class="bar-track"><div class="bar-fill" style="width:80.78078078078079%;background:#dc2626"></div></div>
+        <div class="bar-value">269</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">File Not Found</div>
+        <div class="bar-track"><div class="bar-fill" style="width:31.53153153153153%;background:#dc2626"></div></div>
+        <div class="bar-value">105</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">User Rejected</div>
+        <div class="bar-track"><div class="bar-fill" style="width:20.42042042042042%;background:#dc2626"></div></div>
+        <div class="bar-value">68</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Edit Failed</div>
+        <div class="bar-track"><div class="bar-fill" style="width:6.306306306306306%;background:#dc2626"></div></div>
+        <div class="bar-value">21</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">File Too Large</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.504504504504505%;background:#dc2626"></div></div>
+        <div class="bar-value">15</div>
+      </div>
+      </div>
+    </div>
+
+    
+    <h2 id="section-wins">Impressive Things You Did</h2>
+    <p class="section-intro">You're running a high-volume Claude Code operation with 911 sessions over just 3 days, heavily focused on RFC document workflows with custom slash commands.</p>
+    <div class="big-wins">
+      
+        <div class="big-win">
+          <div class="big-win-title">Custom RFC Command Automation</div>
+          <div class="big-win-desc">You've built custom slash commands like /urfc and /rrfc that orchestrate complex RFC workflows automatically. These commands handle reading relevant files, checking out branches, and coordinating updates — turning what would be a manual multi-step process into a single trigger.</div>
+        </div>
+      
+        <div class="big-win">
+          <div class="big-win-title">Parallel Review Task Orchestration</div>
+          <div class="big-win-desc">You're leveraging Claude's task system extensively, with over 2,300 TaskCreate and 2,400 TaskUpdate calls, to run parallel RFC reviews simultaneously. Your /rrfc command launches multiple review tasks in parallel, dramatically increasing throughput for document review cycles across your team.</div>
+        </div>
+      
+        <div class="big-win">
+          <div class="big-win-title">PR Comment-Driven RFC Updates</div>
+          <div class="big-win-desc">You've established a tight feedback loop where PR reviewer comments automatically drive RFC updates through your custom commands. With 22 pr_comment_response sessions and 25 document_update goals, you're using Claude to systematically gather reviewer feedback, analyze it, and apply changes back to your RFC documents.</div>
+        </div>
+      
+    </div>
+    
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">What Helped Most (Claude's Capabilities)</div>
+        <div class="bar-row">
+        <div class="bar-label">Proactive Help</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#16a34a"></div></div>
+        <div class="bar-value">32</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Multi-file Changes</div>
+        <div class="bar-track"><div class="bar-fill" style="width:78.125%;background:#16a34a"></div></div>
+        <div class="bar-value">25</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Outcomes</div>
+        <div class="bar-row">
+        <div class="bar-label">Partially Achieved</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#8b5cf6"></div></div>
+        <div class="bar-value">45</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Mostly Achieved</div>
+        <div class="bar-track"><div class="bar-fill" style="width:22.22222222222222%;background:#8b5cf6"></div></div>
+        <div class="bar-value">10</div>
+      </div>
+<div class="bar-row">
+        <div class="bar-label">Unclear</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.444444444444445%;background:#8b5cf6"></div></div>
+        <div class="bar-value">2</div>
+      </div>
+      </div>
+    </div>
+
+    
+    <h2 id="section-friction">Where Things Go Wrong</h2>
+    <p class="section-intro">Your sessions are dominated by partially achieved outcomes, suggesting that your automated RFC workflows frequently stall or time out before completing their intended modifications.</p>
+    <div class="friction-categories">
+      
+        <div class="friction-category">
+          <div class="friction-title">Sessions ending before work completes</div>
+          <div class="friction-desc">A striking 45 out of 57 sessions were only partially achieved, with multiple sessions ending before Claude actually made edits. Your custom commands like /urfc and /rrfc trigger extensive file reading and analysis phases that consume so much context or time that the session ends before modifications land. Consider breaking these workflows into smaller, more targeted steps—e.g., separating the 'gather context' phase from the 'apply edits' phase.</div>
+          <ul class="friction-examples"><li>Your /urfc command to update an RFC based on review feedback resulted in Claude reading all relevant files and investigating the codebase, but the session ended before any actual edits were made</li><li>A PR comment response session had Claude successfully gathering and analyzing reviewer feedback, but the session ended before the RFC update was completed</li></ul>
+        </div>
+      
+        <div class="friction-category">
+          <div class="friction-title">Wrong branch and repository assumptions</div>
+          <div class="friction-desc">Claude made incorrect assumptions about your branch naming conventions, wasting cycles on failed operations. You could add explicit branch context to your custom commands or include branch naming patterns in your CLAUDE.md so Claude doesn't have to guess.</div>
+          <ul class="friction-examples"><li>Claude tried to checkout a feature/ branch that didn't exist before realizing the PR was actually on an rfc/ branch, burning time on a failed git operation</li><li>You triggered an RFC creation for a document that already existed, suggesting the commands lack pre-checks—though Claude recovered, the initial wrong approach still cost time</li></ul>
+        </div>
+      
+        <div class="friction-category">
+          <div class="friction-title">Heavy parallelism without proportional completion rates</div>
+          <div class="friction-desc">You're making extensive use of TaskCreate (2,308 calls) and TaskUpdate (2,439 calls) to run parallel sub-tasks, but with only 10 mostly-achieved outcomes versus 45 partially-achieved, the parallelism appears to fragment work without ensuring any single thread finishes. Consider reducing the number of parallel review tasks or adding checkpointing so partial progress is preserved and resumable.</div>
+          <ul class="friction-examples"><li>Your /rrfc command launched 3 parallel review tasks for a single RFC, spreading context across multiple sub-agents when a sequential approach might have completed within the session window</li><li>Across 911 sessions with 7,227 Bash calls and 6,969 Read calls, the sheer volume of file reading relative to 3,058 Edits and 1,471 Writes suggests most session time is spent on context gathering rather than producing output</li></ul>
+        </div>
+      
+    </div>
+    
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Primary Friction Types</div>
+        <div class="bar-row">
+        <div class="bar-label">Wrong Approach</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:#dc2626"></div></div>
+        <div class="bar-value">22</div>
+      </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Inferred Satisfaction (model-estimated)</div>
+        <p class="empty">No data</p>
+      </div>
+    </div>
+
+    
+    
+    <h2 id="section-features">Existing CC Features to Try</h2>
+    <div class="claude-md-section">
+      <h3>Suggested CLAUDE.md Additions</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Just copy this into Claude Code to add it to your CLAUDE.md.</p>
+      <div class="claude-md-actions">
+        <button class="copy-all-btn" onclick="copyAllCheckedClaudeMd()">Copy All Checked</button>
+      </div>
+      
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-0" class="cmd-checkbox" checked data-text="Add under a new ## Git Conventions section at the top level of CLAUDE.md\n\nWhen working with RFCs, branches follow the naming convention `rfc/` not `feature/`. Always check existing branches with `git branch -a | grep rfc` before attempting checkout.">
+          <label for="cmd-0">
+            <code class="cmd-code">When working with RFCs, branches follow the naming convention `rfc/` not `feature/`. Always check existing branches with `git branch -a | grep rfc` before attempting checkout.</code>
+            <button class="copy-btn" onclick="copyCmdItem(0)">Copy</button>
+          </label>
+          <div class="cmd-why">Claude repeatedly tried checking out `feature/` branches when the actual convention uses `rfc/` prefixes, causing friction in multiple sessions.</div>
+        </div>
+      
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-1" class="cmd-checkbox" checked data-text="Add under a new ## Workflow Priorities section in CLAUDE.md\n\nFor long-running RFC workflows (/urfc, /rrfc, PR comment responses), always complete all file edits and commit changes before the session ends. If the task involves updating an RFC based on review feedback, prioritize making the edits over exhaustive codebase investigation.">
+          <label for="cmd-1">
+            <code class="cmd-code">For long-running RFC workflows (/urfc, /rrfc, PR comment responses), always complete all file edits and commit changes before the session ends. If the task involves updating an RFC based on review feedback, prioritize making the edits over exhaustive codebase investigation.</code>
+            <button class="copy-btn" onclick="copyCmdItem(1)">Copy</button>
+          </label>
+          <div class="cmd-why">Multiple sessions ended with Claude still in the 'reading and investigating' phase without having made actual edits, leading to partially_achieved outcomes in 45 out of 57 sessions.</div>
+        </div>
+      
+        <div class="claude-md-item">
+          <input type="checkbox" id="cmd-2" class="cmd-checkbox" checked data-text="Add under ## RFC Workflows section in CLAUDE.md\n\nBefore creating a new RFC, always check if one already exists by running `find . -name '*.md' -path '*/rfc/*'` or searching the relevant directory.">
+          <label for="cmd-2">
+            <code class="cmd-code">Before creating a new RFC, always check if one already exists by running `find . -name '*.md' -path '*/rfc/*'` or searching the relevant directory.</code>
+            <button class="copy-btn" onclick="copyCmdItem(2)">Copy</button>
+          </label>
+          <div class="cmd-why">At least one session involved attempting to create an RFC that already existed, wasting time before Claude caught the duplication.</div>
+        </div>
+      
+    </div>
+    
+    
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into Claude Code and it'll set it up for you.</p>
+    <div class="features-section">
+      
+        <div class="feature-card">
+          <div class="feature-title">Hooks</div>
+          <div class="feature-oneliner">Auto-run shell commands at specific lifecycle events like pre-tool or post-tool execution.</div>
+          <div class="feature-why"><strong>Why for you:</strong> With 284 commits and heavy RFC workflows, you could auto-validate branch naming conventions (ensuring `rfc/` prefix) before git operations, eliminating the recurring friction of Claude checking out wrong branches.</div>
+          
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code">// .claude/settings.json
+{
+  &quot;hooks&quot;: {
+    &quot;preTool&quot;: [
+      {
+        &quot;matcher&quot;: &quot;Bash&quot;,
+        &quot;command&quot;: &quot;if echo \&quot;$CC_TOOL_INPUT\&quot; | grep -q 'checkout.*feature/'; then echo 'WARNING: Use rfc/ branch prefix, not feature/' &gt;&amp;2; exit 1; fi&quot;
+      }
+    ]
+  }
+}</code>
+                <button class="copy-btn" onclick="copyText(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      
+        <div class="feature-card">
+          <div class="feature-title">Custom Skills</div>
+          <div class="feature-oneliner">Reusable prompt files that run with a single /command.</div>
+          <div class="feature-why"><strong>Why for you:</strong> You already use /urfc and /rrfc skills heavily, but sessions frequently end before edits are made. Refining these skill definitions to include explicit completion criteria (e.g., 'You MUST commit changes before finishing') would dramatically improve your 79% partial-achievement rate.</div>
+          
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code"># .claude/skills/urfc/SKILL.md
+## Update RFC from Review Feedback
+1. Read the RFC file and ALL review comments
+2. Identify specific changes requested
+3. Make ALL edits to the RFC (do not stop at investigation)
+4. Run `git diff` to verify changes
+5. Commit with message: &quot;Update RFC based on review feedback&quot;
+
+IMPORTANT: Do not end the session until edits are committed. Prioritize making changes over exhaustive codebase exploration.</code>
+                <button class="copy-btn" onclick="copyText(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      
+        <div class="feature-card">
+          <div class="feature-title">Task Agents</div>
+          <div class="feature-oneliner">Claude spawns focused sub-agents for parallel work.</div>
+          <div class="feature-why"><strong>Why for you:</strong> You're already using TaskCreate (2308 calls) and Task (640 calls) extensively for parallel RFC reviews. Consider structuring your /rrfc skill to explicitly define sub-agent responsibilities so each review dimension completes independently, reducing the risk of sessions timing out before completion.</div>
+          
+          <div class="feature-examples">
+            <div class="feature-example">
+              <div class="example-code-row">
+                <code class="example-code">Use this prompt: &quot;Launch 3 parallel review agents for this RFC: Agent 1 reviews technical accuracy against the codebase, Agent 2 reviews completeness against our RFC template, Agent 3 reviews implementation feasibility. Each agent should produce a written summary in under 500 words.&quot;</code>
+                <button class="copy-btn" onclick="copyText(this)">Copy</button>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      
+    </div>
+    
+    
+    <h2 id="section-patterns">New Ways to Use Claude Code</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into Claude Code and it'll walk you through it.</p>
+    <div class="patterns-section">
+      
+        <div class="pattern-card">
+          <div class="pattern-title">Sessions ending before completion</div>
+          <div class="pattern-summary">79% of sessions only partially achieved their goal, mostly because Claude spent too long reading files before editing.</div>
+          <div class="pattern-detail">Across your RFC update and review workflows, Claude consistently reads all relevant files, investigates the codebase thoroughly, but then the session ends before actual modifications are committed. This pattern appeared in at least 3 of 5 analyzed sessions. Adding explicit time-boxing or edit-first instructions to your custom skills would force Claude to prioritize output over investigation. Your skills should include a 'complete the edit and commit' mandate.</div>
+          
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Paste into Claude Code:</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">Update the RFC based on review feedback. IMPORTANT: Limit investigation to 3 minutes of reading. Then immediately begin making edits. Commit all changes before doing any additional exploration.</code>
+              <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            </div>
+          </div>
+          
+        </div>
+      
+        <div class="pattern-card">
+          <div class="pattern-title">Leverage high Bash usage for validation</div>
+          <div class="pattern-summary">With 7,227 Bash calls, add automated validation steps into your RFC workflows.</div>
+          <div class="pattern-detail">You're already the heaviest Bash user pattern, running extensive shell commands. Channel this into structured validation: after every RFC edit, auto-run a markdown linter, check for broken links, and verify the RFC follows your template structure. This turns your Bash-heavy workflow into a quality gate rather than just exploration. Given that document_update and pr_comment_response are your top goals, automated validation after edits would catch issues before PR review.</div>
+          
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Paste into Claude Code:</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">After updating this RFC, validate it by: 1) checking all section headers match our RFC template, 2) verifying any code references point to existing files, 3) running markdownlint if available, 4) showing me a git diff summary of all changes made.</code>
+              <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            </div>
+          </div>
+          
+        </div>
+      
+        <div class="pattern-card">
+          <div class="pattern-title">Consolidate RFC review into single-pass workflows</div>
+          <div class="pattern-summary">Combine your /rrfc review and /urfc update into a single end-to-end workflow to avoid context loss.</div>
+          <div class="pattern-detail">Currently you run parallel reviews (/rrfc), then separately trigger updates (/urfc), and also handle PR comment responses as separate sessions. Each session restart loses context. Consider creating a combined skill that reviews, synthesizes feedback, makes edits, and commits in one pass. With 911 sessions over just 3 days, reducing session count by combining steps would significantly improve throughput and completion rates.</div>
+          
+          <div class="copyable-prompt-section">
+            <div class="prompt-label">Paste into Claude Code:</div>
+            <div class="copyable-prompt-row">
+              <code class="copyable-prompt">Review this RFC against all open PR comments and existing review feedback. For each piece of feedback: 1) determine if it requires a change, 2) make the change immediately, 3) add a comment in the PR acknowledging the change. Commit all updates when done.</code>
+              <button class="copy-btn" onclick="copyText(this)">Copy</button>
+            </div>
+          </div>
+          
+        </div>
+      
+    </div>
+    
+    
+
+    
+    <h2 id="section-horizon">On the Horizon</h2>
+    <p class="section-intro">Your team has built sophisticated RFC automation with parallel review agents, and the data reveals clear opportunities to push these workflows from partially-achieved to fully autonomous.</p>
+    <div class="horizon-section">
+      
+        <div class="horizon-card">
+          <div class="horizon-title">End-to-End Autonomous RFC Update Pipeline</div>
+          <div class="horizon-possible">45 of 57 sessions were only partially achieved, largely because sessions ended before edits were completed. An autonomous pipeline could read review comments, draft all RFC updates, validate changes against the original feedback, and commit — all without human intervention. By chaining tasks with explicit completion gates, you eliminate the pattern of sessions dying mid-edit.</div>
+          <div class="horizon-tip"><strong>Getting started:</strong> Refactor your /urfc command to use TaskCreate with dependent sub-tasks that include a final self-validation step, ensuring the agent commits and pushes before marking complete.</div>
+          <div class="pattern-prompt"><div class="prompt-label">Paste into Claude Code:</div><code>You are an autonomous RFC update agent. Follow this pipeline exactly:
+
+1. GATHER: Read the RFC file, all linked PR comments, and any review task outputs. Summarize every piece of feedback as a checklist.
+2. PLAN: Produce a section-by-section edit plan mapping each feedback item to a specific RFC section and proposed change.
+3. EXECUTE: Apply all edits to the RFC file. For each edit, leave an inline comment referencing which feedback item it addresses.
+4. VALIDATE: Re-read the updated RFC and cross-check against your feedback checklist. Every item must be addressed — if any are missing, fix them now.
+5. COMMIT: Stage changes, commit with message 'docs: update RFC per review feedback — addresses N comments', and push to the current branch.
+6. REPORT: Output a markdown summary table with columns: Feedback Item | Section Modified | Status (done/skipped with reason).
+
+Do NOT stop or ask for confirmation between steps. If you encounter an ambiguous comment, make your best judgment and note it in the report.</code><button class="copy-btn" onclick="copyText(this)">Copy</button></div>
+        </div>
+      
+        <div class="horizon-card">
+          <div class="horizon-title">Parallel Multi-Reviewer Agents With Consensus</div>
+          <div class="horizon-possible">You're already launching 3 parallel review tasks, but they operate independently. Imagine spawning 5 specialized reviewer agents — architecture, security, performance, API design, and documentation quality — then having a synthesizer agent merge their findings, resolve contradictions, and produce a single prioritized action plan. This transforms review from a list of disconnected comments into a coherent, weighted recommendation.</div>
+          <div class="horizon-tip"><strong>Getting started:</strong> Extend your /rrfc command to spawn role-specific review Tasks and add a final synthesizer Task that depends on all reviewers completing, using TaskUpdate to coordinate.</div>
+          <div class="pattern-prompt"><div class="prompt-label">Paste into Claude Code:</div><code>Launch a parallel RFC review with specialized agents. Create these 5 review tasks, each with a distinct persona and evaluation criteria:
+
+1. ARCHITECTURE REVIEWER: Evaluate system boundaries, component responsibilities, coupling, and scalability. Flag any architectural anti-patterns.
+2. SECURITY REVIEWER: Identify threat vectors, authentication gaps, data exposure risks, and missing validation. Reference OWASP categories where applicable.
+3. PERFORMANCE REVIEWER: Analyze expected load patterns, identify bottlenecks, evaluate caching strategy, and flag any O(n²) or worse algorithms.
+4. API DESIGN REVIEWER: Check consistency with existing APIs, evaluate naming conventions, versioning strategy, and backward compatibility.
+5. DOCS QUALITY REVIEWER: Assess clarity, completeness, missing diagrams, ambiguous requirements, and whether a new engineer could implement from this spec alone.
+
+Each reviewer must output: {severity: critical|major|minor, section: string, finding: string, recommendation: string}[]
+
+After all 5 complete, act as SYNTHESIZER: merge all findings, remove duplicates, resolve contradictions (explain your reasoning), and produce a final ranked list of changes the RFC author should make, grouped by priority.</code><button class="copy-btn" onclick="copyText(this)">Copy</button></div>
+        </div>
+      
+        <div class="horizon-card">
+          <div class="horizon-title">Branch-Aware Workflow With Auto-Recovery</div>
+          <div class="horizon-possible">The friction data shows agents attempting to checkout non-existent branches — a simple error that derailed progress. An auto-recovery layer could detect git failures, infer the correct branch from PR metadata, and self-correct in seconds. Combined with pre-flight checks, this eliminates an entire class of workflow failures and moves your 'wrong_approach' friction count from 22 toward zero.</div>
+          <div class="horizon-tip"><strong>Getting started:</strong> Add a pre-flight validation step to your custom slash commands that resolves the correct branch from PR/RFC metadata before any git operations, using Bash to query git and the GitHub API.</div>
+          <div class="pattern-prompt"><div class="prompt-label">Paste into Claude Code:</div><code>Before starting any RFC workflow, execute this pre-flight checklist:
+
+1. Run `git fetch --all --prune` to sync remote state.
+2. Extract the PR number or RFC identifier from the command input.
+3. Query the correct branch: run `gh pr view &lt;PR_NUMBER&gt; --json headRefName -q .headRefName` to get the actual branch name. If no PR number, search with `gh pr list --search '&lt;RFC_NAME&gt;' --json number,headRefName`.
+4. Verify the branch exists locally and remotely: `git branch -a | grep &lt;branch_name&gt;`.
+5. If the branch doesn't exist locally, create it tracking the remote: `git checkout -b &lt;branch&gt; origin/&lt;branch&gt;`.
+6. Confirm you're on the correct branch: `git branch --show-current`.
+7. Verify the RFC file exists at the expected path. If not, use `find . -name '*&lt;rfc_slug&gt;*' -type f` to locate it.
+
+Only after ALL checks pass, output 'PRE-FLIGHT COMPLETE: Ready to proceed on branch &lt;branch&gt; with file &lt;path&gt;' and continue with the main workflow. If any check fails, attempt auto-recovery before reporting an error.</code><button class="copy-btn" onclick="copyText(this)">Copy</button></div>
+        </div>
+      
+    </div>
+    
+
+    
+    <div class="fun-ending">
+      <div class="fun-headline">"Claude confidently tried to checkout a feature branch that didn't exist, then sheepishly realized the PR was on the rfc/ branch all along"</div>
+      <div class="fun-detail">During a PR comment response workflow, Claude went looking for a feature/ branch with full confidence before having to backtrack when it discovered the work was actually on an rfc/ branch — a classic 'wrong hallway' moment in a codebase with 911 sessions running across just 3 days.</div>
+    </div>
+    
+
+    
+  </div>
+  <script>
+    function toggleCollapsible(header) {
+      header.classList.toggle('open');
+      const content = header.nextElementSibling;
+      content.classList.toggle('open');
+    }
+    function copyText(btn) {
+      const code = btn.previousElementSibling;
+      navigator.clipboard.writeText(code.textContent).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+    function copyCmdItem(idx) {
+      const checkbox = document.getElementById('cmd-' + idx);
+      if (checkbox) {
+        const text = checkbox.dataset.text;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = checkbox.nextElementSibling.querySelector('.copy-btn');
+          if (btn) { btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy'; }, 2000); }
+        });
+      }
+    }
+    function copyAllCheckedClaudeMd() {
+      const checkboxes = document.querySelectorAll('.cmd-checkbox:checked');
+      const texts = [];
+      checkboxes.forEach(cb => {
+        if (cb.dataset.text) { texts.push(cb.dataset.text); }
+      });
+      const combined = texts.join('\n');
+      const btn = document.querySelector('.copy-all-btn');
+      if (btn) {
+        navigator.clipboard.writeText(combined).then(() => {
+          btn.textContent = 'Copied ' + texts.length + ' items!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy All Checked'; btn.classList.remove('copied'); }, 2000);
+        });
+      }
+    }
+    // Timezone selector for time of day chart (data is from our own analytics, not user input)
+    const rawHourCounts = {"0":1045,"1":299,"9":148,"10":561,"11":1214,"12":10,"14":86,"15":407,"16":654,"17":643,"18":100,"23":53};
+    function updateHourHistogram(offsetFromPT) {
+      const periods = [
+        { label: "Morning (6-12)", range: [6,7,8,9,10,11] },
+        { label: "Afternoon (12-18)", range: [12,13,14,15,16,17] },
+        { label: "Evening (18-24)", range: [18,19,20,21,22,23] },
+        { label: "Night (0-6)", range: [0,1,2,3,4,5] }
+      ];
+      const adjustedCounts = {};
+      for (const [hour, count] of Object.entries(rawHourCounts)) {
+        const newHour = (parseInt(hour) + offsetFromPT + 24) % 24;
+        adjustedCounts[newHour] = (adjustedCounts[newHour] || 0) + count;
+      }
+      const periodCounts = periods.map(p => ({
+        label: p.label,
+        count: p.range.reduce((sum, h) => sum + (adjustedCounts[h] || 0), 0)
+      }));
+      const maxCount = Math.max(...periodCounts.map(p => p.count)) || 1;
+      const container = document.getElementById('hour-histogram');
+      container.textContent = '';
+      periodCounts.forEach(p => {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = p.label;
+        const track = document.createElement('div');
+        track.className = 'bar-track';
+        const fill = document.createElement('div');
+        fill.className = 'bar-fill';
+        fill.style.width = (p.count / maxCount) * 100 + '%';
+        fill.style.background = '#8b5cf6';
+        track.appendChild(fill);
+        const value = document.createElement('div');
+        value.className = 'bar-value';
+        value.textContent = p.count;
+        row.appendChild(label);
+        row.appendChild(track);
+        row.appendChild(value);
+        container.appendChild(row);
+      });
+    }
+    document.getElementById('timezone-select').addEventListener('change', function() {
+      const customInput = document.getElementById('custom-offset');
+      if (this.value === 'custom') {
+        customInput.style.display = 'inline-block';
+        customInput.focus();
+      } else {
+        customInput.style.display = 'none';
+        updateHourHistogram(parseInt(this.value));
+      }
+    });
+    document.getElementById('custom-offset').addEventListener('change', function() {
+      const offset = parseInt(this.value) + 8;
+      updateHourHistogram(offset);
+    });
+  </script>
+</body>
+</html>

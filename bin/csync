@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SOURCE_DIR="$HOME/projects/vdev/adapters/claude"
+
+# Git リポジトリのルートを取得
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "エラー: gitリポジトリ内で実行してください。" >&2
+  exit 1
+}
+
+# vdev 自身への同期を防止
+if [ "$REPO_ROOT" = "$HOME/projects/vdev" ]; then
+  echo "エラー: vdev リポジトリ自身には同期できません。" >&2
+  exit 1
+fi
+
+DEST_CLAUDE_DIR="$REPO_ROOT/.claude"
+
+echo "同期元: $SOURCE_DIR"
+echo "同期先: $REPO_ROOT"
+echo ""
+
+# .claude ディレクトリ配下にコピー（CLAUDE.md を除く）
+mkdir -p "$DEST_CLAUDE_DIR"
+rsync -av --exclude='CLAUDE.md' --exclude='settings.local.json' "$SOURCE_DIR/" "$DEST_CLAUDE_DIR/"
+
+# CLAUDE.md はリポジトリルート直下にコピー
+cp "$SOURCE_DIR/CLAUDE.md" "$REPO_ROOT/CLAUDE.md"
+
+echo ""
+echo "完了: Claude設定を $REPO_ROOT に同期しました。"

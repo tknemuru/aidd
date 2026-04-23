@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# サービス仕様書の初期化スクリプト
+#
+# JST日付付きslugの生成、ブランチ作成、テンプレートコピーを行う。
+#
+# 使用方法:
+#   spec-init <slugstr>
+#
+# 引数:
+#   slugstr: 最大30文字の全小文字ケバブケース英数字 (a-z, 0-9, ハイフン)
+#
+# 出力:
+#   標準出力に生成されたslug（YYYYMMDD-slugstr形式）を出力
+set -euo pipefail
+
+VDEV_HOME="$HOME/projects/vdev"
+
+# shellcheck source=lib/git-utils.sh
+source "$VDEV_HOME/bin/lib/git-utils.sh"
+
+# --- 引数チェック ---
+if [ $# -ne 1 ]; then
+  echo "Usage: spec-init <slugstr>" >&2
+  echo "  slugstr: 最大30文字の全小文字ケバブケース英数字 (a-z, 0-9, ハイフン)" >&2
+  exit 1
+fi
+
+SLUGSTR="$1"
+
+# --- slugstr バリデーション ---
+if [ ${#SLUGSTR} -gt 30 ]; then
+  echo "エラー: slugstr が30文字を超えています (${#SLUGSTR}文字)" >&2
+  exit 1
+fi
+
+if ! echo "$SLUGSTR" | grep -qP '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+  echo "エラー: slugstr はケバブケース英数字のみ使用可能です (例: my-feature-name)" >&2
+  exit 1
+fi
+
+# --- Git リポジトリ確認 ---
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "エラー: git リポジトリ内で実行してください。" >&2
+  exit 1
+}
+
+# --- JST日付でslug生成 ---
+DATE=$(TZ=Asia/Tokyo date +%Y%m%d)
+SLUG="${DATE}-${SLUGSTR}"
+
+# --- 重複チェック ---
+TARGET_DIR="$REPO_ROOT/docs/specs/$SLUG"
+if [ -d "$TARGET_DIR" ]; then
+  i=2
+  while [ -d "$REPO_ROOT/docs/specs/${SLUG}-${i}" ]; do
+    i=$((i + 1))
+  done
+  SLUG="${SLUG}-${i}"
+  TARGET_DIR="$REPO_ROOT/docs/specs/$SLUG"
+fi
+
+# --- 未コミット変更チェック ---
+if [ -n "$(git status --porcelain)" ]; then
+  echo "エラー: 未コミットの変更があります。先にコミットまたは stash してください。" >&2
+  exit 1
+fi
+
+# --- ブランチ作成 ---
+DEFAULT_BRANCH=$(get_default_branch)
+git checkout "$DEFAULT_BRANCH"
+git pull --ff-only origin "$DEFAULT_BRANCH" 2>/dev/null || true
+git checkout -b "docs/spec-${SLUG}" 2>/dev/null || git checkout "docs/spec-${SLUG}"
+
+# --- ディレクトリ作成 & テンプレートコピー ---
+mkdir -p "$TARGET_DIR"
+cp "$VDEV_HOME/templates/service-spec/service-spec.md" "$TARGET_DIR/spec.md"
+
+echo "$SLUG"
