@@ -4,6 +4,7 @@
 | :--- | :--- |
 | **作成者 (Author)** | Claude (RFC Author) |
 | **作成日** | 2026-04-23 |
+| **ステータス (Status)** | Accepted (承認済) |
 | **タグ** | refactor, runtime, cross-platform, copilot |
 | **関連リンク** | docs/rfcs/20260423-windows-copilot-rewrite/rfc.md |
 
