@@ -16,34 +16,6 @@
       "Task",
       "Skill"
     ],
-    "deny": [
-      "Read(//mnt/c/**)",
-      "Edit(//mnt/c/**)",
-      "Write(//mnt/c/**)",
-      "Bash(/mnt/c *)",
-      "Bash(* /mnt/c*)"
-    ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Read|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if echo \"$CC_TOOL_INPUT\" | grep -q '/mnt/c'; then echo '{\"decision\": \"block\", \"reason\": \"Access to /mnt/c (C drive) is prohibited\"}'; fi"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if echo \"$CC_TOOL_INPUT\" | grep -q '/mnt/c'; then echo '{\"decision\": \"block\", \"reason\": \"Bash access to /mnt/c (C drive) is prohibited\"}'; fi"
-          }
-        ]
-      }
-    ]
+    "deny": []
   }
 }

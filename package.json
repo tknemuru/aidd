@@ -1,0 +1,33 @@
+{
+  "name": "aidd",
+  "version": "0.2.0",
+  "description": "AI-driven RFC development workflow CLI (Windows + Copilot compatible)",
+  "private": false,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "csync": "bin/dist/csync.js",
+    "rfc-init": "bin/dist/rfc-init.js",
+    "rfc-publish": "bin/dist/rfc-publish.js",
+    "spec-init": "bin/dist/spec-init.js",
+    "adev": "bin/dist/adev.js"
+  },
+  "files": [
+    "bin/dist/",
+    "adapters/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/chmod-bins.mjs",
+    "build:test": "tsc -p tsconfig.test.json",
+    "pretest": "npm run build && npm run build:test",
+    "test": "node --test --test-reporter=spec bin/test-dist/",
+    "clean": "rimraf bin/dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0"
+  }
+}

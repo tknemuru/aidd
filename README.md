@@ -4,23 +4,26 @@
 
 ## 概要
 
-`aidd` は、Claude Code を用いた RFC 駆動開発の標準フローを定義し、各プロジェクトリポジトリに共用資産を配布する仕組みを提供する。
+`aidd` は、Claude Code / GitHub Copilot（Claude モデル）を用いた RFC 駆動開発の標準フローを定義し、各プロジェクトリポジトリに共用資産を配布する仕組みを提供する。配布 CLI は TypeScript 実装で Node.js ランタイム上で動作し、Windows ネイティブと Linux の双方で同一の挙動となる。
 
 ## ディレクトリ構成
 
 ```
 aidd/
-├── install.sh              # CLI ツールをグローバルインストールするスクリプト
-├── bin/                    # CLI ツール（install.sh で ~/.local/bin/ に symlink される）
-└── adapters/claude/        # csync で各リポジトリの .claude/ へコピーされる配布単位
-    ├── CLAUDE.md           # ルートに配置されるプロジェクト指示書
-    ├── commands/           # Claude Code スラッシュコマンド定義
-    ├── rules/              # 行動原則
-    ├── prompts/
-    │   ├── roles/          # AI 人格定義（RFC Author, レビュアー等）
-    │   └── criterias/      # レビュー検証項目（RFC用, 実装用）
-    ├── templates/          # RFC・サービス仕様書・レポート等のテンプレート
-    └── workflow/           # 開発ライフサイクル定義
+├── package.json              # npm パッケージ定義（bin フィールドで 5 本の CLI を公開）
+├── bin/
+│   ├── src/                 # CLI / オーケストレータの TypeScript 実装
+│   └── dist/                # ビルド成果物（npm install 時に利用される JS）
+├── adapters/
+│   ├── claude/              # Claude Code 向け配布資産
+│   │   ├── CLAUDE.md        # 対象リポジトリのルートに配置される指示書
+│   │   ├── rules/           # 行動原則
+│   │   ├── prompts/         # AI 人格・レビュー基準等
+│   │   ├── templates/       # RFC・サービス仕様書・レポート等のテンプレート
+│   │   ├── workflow/        # 開発ライフサイクル定義
+│   │   └── settings.json    # Claude Code ローカル設定のひな形
+│   └── commands/            # 中立プロンプトマスタ（Claude / Copilot 双方へ配布される）
+└── docs/                    # 本リポジトリのシステム概要ドキュメント
 ```
 
 ## 開発ライフサイクル
@@ -38,56 +41,62 @@ aidd/
 
 | コマンド | 概要 |
 | :--- | :--- |
-| `csync` | `adapters/claude/` 配下の設定を対象リポジトリの `.claude/` および `CLAUDE.md` に同期 |
-| `rfc-init <slugstr>` | JST 日付付き slug 生成、`rfc/<slug>` ブランチ作成、RFC ディレクトリ・テンプレート配置 |
+| `csync` | 配布資産を対象リポジトリの `.claude/` と `.github/prompts/` に同期 |
+| `rfc-init <slugstr>` | JST 日付付き slug 生成、`rfc/<slug>` ブランチ作成、RFC テンプレ配置 |
 | `rfc-publish <slug>` | RFC のコミット・push・Draft PR 作成 |
 | `spec-init <slugstr>` | サービス仕様書ディレクトリ・テンプレート配置 |
-| `adev.sh` | 自動開発オーケストレータ（`/adev` コマンドから起動される） |
+| `adev` | 自動開発オーケストレータ（`/adev` コマンドから起動される） |
 
 ## セットアップ
 
-### 1. CLI ツールのグローバルインストール
+### 1. Node.js の導入
 
-aidd リポジトリを任意の場所に clone し、`install.sh` を一度実行する。
+Node.js LTS（20 以降）を公式インストーラで導入する。Windows 11 では [Node.js 公式サイト](https://nodejs.org/) の LTS MSI を利用するのが簡便である。Linux はディストリビューションのパッケージマネージャ（apt / dnf / pacman 等）か `nvm` を利用する。
 
-```bash
-git clone git@github.com:tknemuru/aidd.git ~/projects/aidd
-cd ~/projects/aidd
-./install.sh
+### 2. aidd CLI のグローバルインストール
+
+aidd リポジトリを任意の場所に clone し、グローバルインストールを実行する。
+
+```powershell
+git clone https://github.com/tknemuru/aidd.git
+cd aidd
+npm install
+npm run build
+npm install -g .
 ```
 
-`install.sh` は `bin/` 配下の CLI ツールを `~/.local/bin/` にシンボリックリンクする。clone 先は任意で、スクリプトが自己発見する。
+上記により `csync`, `rfc-init`, `rfc-publish`, `spec-init`, `adev` の 5 本の CLI がパス解決可能となる。
 
-インストール先を変えたい場合は `AIDD_INSTALL_DIR` 環境変数で上書きできる。
+### 3. AI ランタイムの選択
 
-```bash
-AIDD_INSTALL_DIR=/usr/local/bin ./install.sh
-```
+AI 呼び出しは環境変数 `AI_BACKEND` により切り替える。既定は `claude`。
 
-`~/.local/bin` が `PATH` に含まれていない場合は `~/.profile` や `~/.bashrc` に以下を追加する。
+| 値 | 前提 CLI |
+| :--- | :--- |
+| `claude` | Claude Code CLI が導入されていること |
+| `copilot` | GitHub Copilot CLI が導入されていること |
 
-```bash
-export PATH="$HOME/.local/bin:$PATH"
-```
-
-### 2. 対象リポジトリへの同期
+### 4. 対象リポジトリへの同期
 
 対象リポジトリ内で `csync` を実行する。
 
-```bash
-cd ~/projects/<target-repo>
+```powershell
+cd <target-repo>
 csync
 ```
 
 以下が同期される:
+
 - `adapters/claude/CLAUDE.md` → `<target-repo>/CLAUDE.md`
 - `adapters/claude/` 配下（CLAUDE.md 以外） → `<target-repo>/.claude/`
+- `adapters/commands/*.md` → `<target-repo>/.claude/commands/`（Claude 形式）
+- `adapters/commands/*.md` → `<target-repo>/.github/prompts/*.prompt.md`（Copilot 形式）
 
-同期後、対象リポジトリは aidd リポジトリへの実行時パス依存を持たない。各コマンド定義は `.claude/` 相対パスで自身の資産を参照する。
+同期後、対象リポジトリは aidd リポジトリへの実行時パス依存を持たない。
 
 ## 前提環境
 
-- Windows 11 + WSL (Ubuntu)
-- VS Code (Remote-WSL)
-- Claude Code (Claude Max Plan)
+- Windows 11 ネイティブ（PowerShell / Windows Terminal）もしくは Linux
+- Node.js LTS（20 以降）
+- Claude Code CLI または GitHub Copilot CLI（Claude モデル利用可プラン）
 - GitHub CLI (`gh`)
