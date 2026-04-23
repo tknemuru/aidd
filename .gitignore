@@ -1,1 +1,15 @@
+node_modules/
+bin/dist/
+bin/test-dist/
+
+# csync で生成される配布資産（aidd 自身ではコミットしない）
+.claude/
+.github/prompts/
+CLAUDE.md
+
+# ローカル設定
 adapters/claude/settings.local.json
+settings.local.json
+
+*.log
+.DS_Store
