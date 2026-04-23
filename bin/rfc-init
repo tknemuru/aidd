@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VDEV_HOME="$HOME/projects/vdev"
+# スクリプト自身の位置から aidd リポジトリのルートを特定する。
+AIDD_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 # shellcheck source=lib/git-utils.sh
-source "$VDEV_HOME/bin/lib/git-utils.sh"
+source "$AIDD_ROOT/bin/lib/git-utils.sh"
 
 # --- 引数チェック ---
 if [ $# -ne 1 ]; then
@@ -61,6 +62,6 @@ git checkout -b "rfc/${SLUG}" 2>/dev/null || git checkout "rfc/${SLUG}"
 
 # --- ディレクトリ作成 & テンプレートコピー ---
 mkdir -p "$TARGET_DIR"
-cp "$VDEV_HOME/templates/rfc/rfc-default.md" "$TARGET_DIR/rfc.md"
+cp "$AIDD_ROOT/adapters/claude/templates/rfc/rfc-default.md" "$TARGET_DIR/rfc.md"
 
 echo "$SLUG"

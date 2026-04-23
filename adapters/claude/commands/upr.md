@@ -146,7 +146,7 @@ gh pr comment {pr_number} --body "> 元コメントの引用
 
 ### Step 7: 修正
 
-1. `~/projects/vdev/prompts/roles/rfc-author.md` を読み込み、RFC 修正時はその人格に従う。
+1. `.claude/prompts/roles/rfc-author.md` を読み込み、RFC 修正時はその人格に従う。
 2. カテゴリ A（当初の A + カテゴリ B から昇格したもの）の指摘に対して修正を行う。
 
 #### 実装 PR の場合

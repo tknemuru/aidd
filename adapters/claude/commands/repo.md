@@ -51,11 +51,11 @@ git checkout -b "repo/<description>"
 REPO_ROOT=$(git rev-parse --show-toplevel)
 if [ ! -f "$REPO_ROOT/docs/reports/README.md" ]; then
   mkdir -p "$REPO_ROOT/docs/reports"
-  cp ~/projects/vdev/docs/reports/README.md "$REPO_ROOT/docs/reports/README.md"
+  cp .claude/templates/reports/README.md "$REPO_ROOT/docs/reports/README.md"
 fi
 ```
 
-vdev 以外のリポジトリで初回実行時、vdev から README.md をコピーして命名規則を展開する。
+対象リポジトリで初回実行時、`.claude/templates/reports/README.md` から README.md をコピーして命名規則を展開する。
 
 ### Step 6: ドキュメント作成
 

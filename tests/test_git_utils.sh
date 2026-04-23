@@ -10,7 +10,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VDEV_HOME="$(cd "$SCRIPT_DIR/.." && pwd)"
+AIDD_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # テスト結果カウンタ
 TESTS_RUN=0
@@ -107,7 +107,7 @@ test_get_pr_status_merged() {
   export -f gh
 
   # git-utils.sh を読み込み（ghモックが有効な状態で）
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local result
   result=$(get_pr_status "feature/test-branch")
 
@@ -132,7 +132,7 @@ test_get_pr_status_open() {
   }
   export -f gh
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local result
   result=$(get_pr_status "feature/test-branch")
 
@@ -151,7 +151,7 @@ test_get_pr_status_none() {
   }
   export -f gh
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local result
   result=$(get_pr_status "feature/test-branch")
 
@@ -200,7 +200,7 @@ echo "成功出力"
 exit 0
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   local output
   output=$(echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null) || exit_code=$?
@@ -230,7 +230,7 @@ echo \"成功出力\"
 exit 0
 "
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null || exit_code=$?
 
@@ -249,7 +249,7 @@ echo "エラー発生" >&2
 exit 1
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null || exit_code=$?
 
@@ -280,7 +280,7 @@ cat > \"$capture_file\"
 exit 0
 "
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   echo "元のテストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null
 
   local captured
@@ -307,7 +307,7 @@ echo "再開条件: APIキーが環境変数に設定されること"
 exit 0
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null >/dev/null || exit_code=$?
 
@@ -325,7 +325,7 @@ echo "完了しました"
 exit 0
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null >/dev/null || exit_code=$?
 
@@ -355,7 +355,7 @@ echo \"ブロッカー: 手動操作が必要\"
 exit 0
 "
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null >/dev/null || exit_code=$?
 
@@ -379,7 +379,7 @@ echo "行2: 完了"
 exit 0
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local captured
   captured=$(echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null)
 
@@ -397,7 +397,7 @@ sleep 60
 exit 0
 '
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   local exit_code=0
   # タイムアウトを2秒に短縮してテスト
   export CLAUDE_TIMEOUT=2
@@ -422,7 +422,7 @@ echo \"出力テスト\"
 exit 0
 "
 
-  source "$VDEV_HOME/bin/lib/git-utils.sh"
+  source "$AIDD_ROOT/bin/lib/git-utils.sh"
   echo "テストプロンプト" | run_claude_with_recovery --allowedTools "Bash" 2>/dev/null >/dev/null
 
   local fd_target
@@ -463,7 +463,7 @@ test_rfc_init_idempotent_branch() {
   echo "[テスト] rfc-init に冪等化パターンが適用されている"
 
   local rfc_init_content
-  rfc_init_content=$(cat "$VDEV_HOME/bin/rfc-init")
+  rfc_init_content=$(cat "$AIDD_ROOT/bin/rfc-init")
 
   assert_contains \
     "checkout -b に 2>/dev/null フォールバックがある" \
@@ -484,7 +484,7 @@ test_adev_v3_phase_map_input() {
   echo "[テスト] フェーズマップ JSON 入力のコードが存在する"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "PHASE_MAP_FILE 変数が定義されている" \
@@ -507,7 +507,7 @@ test_adev_v3_done_skip() {
   echo "[テスト] DONE フェーズのスキップが実装されている"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "DONE スキップの分岐がある" \
@@ -520,31 +520,31 @@ test_adev_v3_direct_command_calls() {
   echo "[テスト] 各コマンドの直接呼出しが実装されている"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "/rfc コマンドの直接呼出し" \
-    'adapters/claude/commands/rfc.md' \
+    '.claude/commands/rfc.md' \
     "$adev_content"
 
   assert_contains \
     "/rrfc コマンドの直接呼出し" \
-    'adapters/claude/commands/rrfc.md' \
+    '.claude/commands/rrfc.md' \
     "$adev_content"
 
   assert_contains \
     "/imp コマンドの直接呼出し" \
-    'adapters/claude/commands/imp.md' \
+    '.claude/commands/imp.md' \
     "$adev_content"
 
   assert_contains \
     "/rimp コマンドの直接呼出し" \
-    'adapters/claude/commands/rimp.md' \
+    '.claude/commands/rimp.md' \
     "$adev_content"
 
   assert_contains \
     "/vfy コマンドの直接呼出し" \
-    'adapters/claude/commands/vfy.md' \
+    '.claude/commands/vfy.md' \
     "$adev_content"
 }
 
@@ -553,7 +553,7 @@ test_adev_v3_no_arfc_aimp() {
   echo "[テスト] arfc/aimp への参照が存在しない"
 
   TESTS_RUN=$((TESTS_RUN + 1))
-  if ! grep -q "arfc" "$VDEV_HOME/bin/adev.sh" 2>/dev/null; then
+  if ! grep -q "arfc" "$AIDD_ROOT/bin/adev.sh" 2>/dev/null; then
     echo "  PASS: arfc への参照がない"
     TESTS_PASSED=$((TESTS_PASSED + 1))
   else
@@ -562,7 +562,7 @@ test_adev_v3_no_arfc_aimp() {
   fi
 
   TESTS_RUN=$((TESTS_RUN + 1))
-  if ! grep -q "aimp" "$VDEV_HOME/bin/adev.sh" 2>/dev/null; then
+  if ! grep -q "aimp" "$AIDD_ROOT/bin/adev.sh" 2>/dev/null; then
     echo "  PASS: aimp への参照がない"
     TESTS_PASSED=$((TESTS_PASSED + 1))
   else
@@ -576,7 +576,7 @@ test_adev_v3_risk_level_functions() {
   echo "[テスト] リスクレベル分岐関数が実装されている"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "should_escalate_gate_fail 関数がある" \
@@ -599,7 +599,7 @@ test_adev_v3_single_rfc_e2e_skip() {
   echo "[テスト] 単一 RFC 時の全体 E2E スキップが実装されている"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "SLUG_COUNT による分岐がある" \
@@ -617,7 +617,7 @@ test_adev_v3_recovery_loop() {
   echo "[テスト] run_claude_with_recovery が使用されている"
 
   local count
-  count=$(grep -c "run_claude_with_recovery" "$VDEV_HOME/bin/adev.sh")
+  count=$(grep -c "run_claude_with_recovery" "$AIDD_ROOT/bin/adev.sh")
 
   # RFC, RRFC, IMP, RIMP, VFY, 全体E2E 等で複数箇所使用
   TESTS_RUN=$((TESTS_RUN + 1))
@@ -635,7 +635,7 @@ test_adev_v3_stdin_pipe() {
   echo "[テスト] stdin パイプ方式が適用されている"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "PROMPT_EOF ヒアドキュメントが使われている" \
@@ -660,7 +660,7 @@ echo "=== phase_to_ordinal() テスト ==="
 
 # adev.sh から関数定義だけを抽出して読み込む
 # （adev.sh を直接 source するとスクリプト本体が実行されてしまうため）
-eval "$(sed -n '/^phase_to_ordinal()/,/^}/p' "$VDEV_HOME/bin/adev.sh")"
+eval "$(sed -n '/^phase_to_ordinal()/,/^}/p' "$AIDD_ROOT/bin/adev.sh")"
 
 # テスト: 全8フェーズが正しい序数を返すこと
 test_phase_to_ordinal_all_phases() {
@@ -694,7 +694,7 @@ echo ""
 echo "=== detect_current_phase() テスト ==="
 
 # detect_current_phase 関数を読み込む
-eval "$(sed -n '/^detect_current_phase()/,/^}/p' "$VDEV_HOME/bin/adev.sh")"
+eval "$(sed -n '/^detect_current_phase()/,/^}/p' "$AIDD_ROOT/bin/adev.sh")"
 
 # テスト: feature PR が MERGED の場合に DONE を返すこと
 test_detect_phase_done() {
@@ -1041,7 +1041,7 @@ test_adev_has_phase_to_ordinal() {
   echo "[テスト] phase_to_ordinal 関数が adev.sh に存在する"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "phase_to_ordinal 関数が定義されている" \
@@ -1054,7 +1054,7 @@ test_adev_has_detect_current_phase() {
   echo "[テスト] detect_current_phase 関数が adev.sh に存在する"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "detect_current_phase 関数が定義されている" \
@@ -1067,7 +1067,7 @@ test_adev_has_phase_redetection_log() {
   echo "[テスト] フェーズ再判定ログが adev.sh に存在する"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "フェーズ再判定ログメッセージがある" \
@@ -1080,7 +1080,7 @@ test_adev_has_date_prefix_removal() {
   echo "[テスト] 日付プレフィクス除去処理が adev.sh に存在する"
 
   local adev_content
-  adev_content=$(cat "$VDEV_HOME/bin/adev.sh")
+  adev_content=$(cat "$AIDD_ROOT/bin/adev.sh")
 
   assert_contains \
     "日付プレフィクス除去の sed がある" \
