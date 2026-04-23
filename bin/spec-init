@@ -13,10 +13,11 @@
 #   標準出力に生成されたslug（YYYYMMDD-slugstr形式）を出力
 set -euo pipefail
 
-VDEV_HOME="$HOME/projects/vdev"
+# スクリプト自身の位置から aidd リポジトリのルートを特定する。
+AIDD_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 # shellcheck source=lib/git-utils.sh
-source "$VDEV_HOME/bin/lib/git-utils.sh"
+source "$AIDD_ROOT/bin/lib/git-utils.sh"
 
 # --- 引数チェック ---
 if [ $# -ne 1 ]; then
@@ -73,6 +74,6 @@ git checkout -b "docs/spec-${SLUG}" 2>/dev/null || git checkout "docs/spec-${SLU
 
 # --- ディレクトリ作成 & テンプレートコピー ---
 mkdir -p "$TARGET_DIR"
-cp "$VDEV_HOME/templates/service-spec/service-spec.md" "$TARGET_DIR/spec.md"
+cp "$AIDD_ROOT/adapters/claude/templates/service-spec/service-spec.md" "$TARGET_DIR/spec.md"
 
 echo "$SLUG"

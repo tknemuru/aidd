@@ -18,10 +18,11 @@ set -euo pipefail
 # ネストセッション検出に引っかかるのを防止する。
 unset CLAUDECODE
 
-VDEV_HOME="$HOME/projects/vdev"
+# スクリプト自身の位置から aidd リポジトリのルートを特定する。
+AIDD_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 # shellcheck source=lib/git-utils.sh
-source "$VDEV_HOME/bin/lib/git-utils.sh"
+source "$AIDD_ROOT/bin/lib/git-utils.sh"
 
 # --- 引数チェック ---
 if [ $# -lt 2 ]; then
@@ -310,7 +311,7 @@ while read -r entry; do
     if {
       cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従ってRFCを作成せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rfc.md
+- コマンド定義: .claude/commands/rfc.md
 
 \$ARGUMENTS の値は以下の元ネタ文章として扱え:
 PROMPT_EOF
@@ -384,7 +385,7 @@ PROMPT_EOF
       RRFC_RESULT=$({
         cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従ってRFCレビューを実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rrfc.md
+- コマンド定義: .claude/commands/rrfc.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -421,7 +422,7 @@ PROMPT_EOF
         {
           cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従ってRFCを修正せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/urfc.md
+- コマンド定義: .claude/commands/urfc.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -486,7 +487,7 @@ PROMPT_EOF
     if {
       cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従って実装を実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/imp.md
+- コマンド定義: .claude/commands/imp.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -534,7 +535,7 @@ PROMPT_EOF
       RIMP_RESULT=$({
         cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従って実装レビューを実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rimp.md
+- コマンド定義: .claude/commands/rimp.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -641,7 +642,7 @@ PROMPT_EOF
     VFY_RESULT=$({
       cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従って検証を実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/vfy.md
+- コマンド定義: .claude/commands/vfy.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -665,7 +666,7 @@ PROMPT_EOF
         cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、
 その手順に従って Verification ゲートレビューを実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rvfy.md
+- コマンド定義: .claude/commands/rvfy.md
 
 \$ARGUMENTS の値は「${slug}」として扱え。
 
@@ -740,7 +741,7 @@ if [ "$SLUG_COUNT" -ge 2 ]; then
   VFY_RESULT=$({
     cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、その手順に従って検証を実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/vfy.md
+- コマンド定義: .claude/commands/vfy.md
 
 \$ARGUMENTS の値は「${SPEC_PATH}」として扱え。
 
@@ -759,7 +760,7 @@ PROMPT_EOF
       cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、
 その手順に従って Verification ゲートレビューを実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rvfy.md
+- コマンド定義: .claude/commands/rvfy.md
 
 \$ARGUMENTS の値は「${SPEC_PATH}」として扱え。
 
@@ -801,7 +802,7 @@ FAIL 項目を特定し、仕様書の §2 E2Eテスト要件を
 修正後、変更をコミット・プッシュせよ。
 
 その後、以下のコマンド定義に従って再検証を実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/vfy.md
+- コマンド定義: .claude/commands/vfy.md
 \$ARGUMENTS の値は「${SPEC_PATH}」として扱え。
 注意: 副作用を伴う操作はユーザ承認済みとして扱え。
 最終行に PASS または FAIL とだけ出力せよ。
@@ -828,7 +829,7 @@ PROMPT_EOF
           cat <<PROMPT_EOF
 以下のコマンド定義を読み込み、
 その手順に従って Verification ゲートレビューを実行せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rvfy.md
+- コマンド定義: .claude/commands/rvfy.md
 
 \$ARGUMENTS の値は「${SPEC_PATH}」として扱え。
 

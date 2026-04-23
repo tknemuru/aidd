@@ -60,7 +60,7 @@ rfc-init <slugstr>
 注意: §0「絶対守ること」セクションはテンプレートのコメントを残したまま
 空欄にすること。人間のみが記述するセクションである。
 
-1. `~/projects/vdev/prompts/roles/rfc-author.md` を読み込み、その人格に切り替わる。
+1. `.claude/prompts/roles/rfc-author.md` を読み込み、その人格に切り替わる。
 2. `docs/rfcs/<slug>/rfc.md` のテンプレート構造に従い、元ネタ文章とコードベース調査結果をもとにRFCを起草する。
 3. ステータスは「Draft (起草中)」、作成日は今日のJST日付（YYYY-MM-DD形式）とする。
 4. **E2E テスト仕様（§7）の起草前に、以下の4段階の導出を内部推論として行う。RFC に書き込むのは Step 6-E2E-4 の最終テーブルのみとし、Step 6-E2E-1〜3 の中間結果は RFC に含めない:**

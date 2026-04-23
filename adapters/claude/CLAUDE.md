@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 ## Development Lifecycle
-開発ライフサイクルの全体像は `~/projects/vdev/workflow/rfc-driven.md` に定義されています。各ステージの DoD・コマンド・運用ルールを参照してください。
+開発ライフサイクルの全体像は `.claude/workflow/rfc-driven.md` に定義されています。各ステージの DoD・コマンド・運用ルールを参照してください。
 
 ## System Overview Documents（システム概要ドキュメント）
 

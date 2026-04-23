@@ -114,7 +114,7 @@ ls docs/rfcs/*/review-vfy-r*.md 2>/dev/null
 ```bash
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 LOG_FILE="/tmp/adev-${TIMESTAMP}.log"
-nohup ~/projects/vdev/bin/adev.sh "$SPEC_PATH" "$PHASE_MAP_FILE" \
+nohup adev.sh "$SPEC_PATH" "$PHASE_MAP_FILE" \
   > "$LOG_FILE" 2>&1 &
 ADEV_PID=$!
 echo "PID: $ADEV_PID, Log: $LOG_FILE"
@@ -216,7 +216,7 @@ loop:
   4. ユーザが対応完了を報告した後、オーケストレータを再起動する
      （冪等性により完了済み slug はスキップされる）
      ```bash
-     nohup ~/projects/vdev/bin/adev.sh "$SPEC_PATH" "$PHASE_MAP_FILE" \
+     nohup adev.sh "$SPEC_PATH" "$PHASE_MAP_FILE" \
        > "$LOG_FILE" 2>&1 &
      ADEV_PID=$!
      ```

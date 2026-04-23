@@ -21,7 +21,7 @@ $ARGUMENTS
 
 ```
 以下のコマンド定義を読み込み、その手順に従って RFC を作成せよ。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/rfc.md
+- コマンド定義: .claude/commands/rfc.md
 
 $ARGUMENTS の値は以下の元ネタ文章として扱え:
 {会話コンテキストから要約した元ネタ文章をここに埋め込む}
@@ -58,7 +58,7 @@ gh pr merge --squash --delete-branch
 
 ```
 以下のコマンド定義を読み込み、その手順に従って実装を行え。
-- コマンド定義: ~/projects/vdev/adapters/claude/commands/imp.md
+- コマンド定義: .claude/commands/imp.md
 
 $ARGUMENTS の値は「{slug}」として扱え。
 ```

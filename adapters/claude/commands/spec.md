@@ -57,7 +57,7 @@ $ARGUMENTS に `--risk` オプションが含まれる場合、
 2. `spec-init` スクリプトを実行する
 
 ```bash
-slug=$(~/projects/vdev/bin/spec-init <slugstr>)
+slug=$(spec-init <slugstr>)
 ```
 
 スクリプトが以下を自動実行する:

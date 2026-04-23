@@ -28,7 +28,7 @@ $ARGUMENTS
 
 ### Step 4: RFC修正
 
-1. `~/projects/vdev/prompts/roles/rfc-author.md` を読み込み、その人格に切り替わる。
+1. `.claude/prompts/roles/rfc-author.md` を読み込み、その人格に切り替わる。
 2. 各レビューの指摘事項（P0 / P1 / P2）を分析し、RFC を修正する。
 3. P0（Blocker）は必ず対応すること。P1（Improvement）は原則対応すること。P2（Note）は対応不要（記録のみ）。
 4. 修正した内容を `docs/rfcs/<slug>/rfc.md` に書き込む。
