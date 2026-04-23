@@ -5,6 +5,9 @@ bin/test-dist/
 # csync で生成される配布資産（aidd 自身ではコミットしない）
 .claude/
 .github/prompts/
+.github/instructions/
+.github/workflow/
+.github/copilot-instructions.md
 CLAUDE.md
 
 # ローカル設定
